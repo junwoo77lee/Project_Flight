@@ -1,0 +1,54 @@
+body {
+    background-color: white;
+    text-align: center;
+    font-family: sans-serif;
+  }
+  
+  .land {
+    fill: #dddddd;
+  }
+  
+  .border {
+    fill: none;
+    stroke-width: 1px;
+  }
+  
+  .interior {
+    stroke: white;
+  }
+  
+  .exterior {
+    stroke: #bbbbbb;
+  }
+  
+  .airport {
+    fill: white;
+    opacity: 0.6;
+    stroke: #252525;
+  }
+
+  .route {
+    fill: none;
+    stroke-width: 0;
+}
+  .plane {
+    fill: #000;
+    stroke-width: 0;
+}
+
+/* .countries {
+    fill: #b0d0ab;
+    stroke: #6cb0e0;
+    stroke-width: 0.5px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+.airports {
+    fill: #036;
+    stroke: #6cb0e0;
+    stroke-width: 0.5px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+} */
