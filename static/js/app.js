@@ -73,7 +73,7 @@
 
 // Special JS libraries for project
 import LatLon from "https://cdn.jsdelivr.net/npm/geodesy@2.2.0/latlon-spherical.min.js"
-
+// import drawHierarchicalBarChart  from "/static/js/hierarchical_barchart.js"
 
 function timeConverterToLocale(UNIX_timestamp) {
     // ISO 8601 format
@@ -167,32 +167,7 @@ function processData(responses) {
 
     const airportCode = null; // should be interacting with DOM
 
-    // if (airportCode) {
-    //     const reducedSummary = filterBySelectedAirport(flightSummary, airportCode);
-    //     // console.log(reducedSummary);
-    //     drawFlights(reducedSummary);
-    // } else {
     drawFlights(flightSummary, airportCode);
-    // };
-
-    // Reorganize airport timetable data into an object
-    // let masterObj = mergeData(timeTable, tracker);//, airportInfo, cityInfo);
-
-    // masterObj.forEach(item => {
-    //     if (!item.departSchTimeUTC) {
-    //         console.log(item);
-    //     }
-    // });
-    // console.log(masterObj);
-
-    // // let currentObj = masterObj.filter(item => item.currentLat);
-    // // currentObj = estimates(currentObj);
-
-    // // console.log(currentObj);
-    // // console.log(d3.extent(currentObj));
-
-
-    // drawArc(masterObj);
 
 }
 
@@ -252,20 +227,24 @@ function drawAirports(airportCoords, flightSummary) {
                     .attr('stroke', 'black');
 
                 console.log(this.id);
-                d3.select("#flights").html("");
-                clearInterval(refreshIntervalId);  // refresh the looping of "setInterval"
+
+                // d3.select("#flights")//.html("");
+                //  .transition()
+                //  .duration(1000)
+                //  .attr("opacity", 0.3);
+
+                clearInterval(refreshIntervalId);  // refresh the looping of "setInterval" 
+                 
                 drawFlights(flightSummary, this.id);
+
+                // d3.select("#flights")//.html("");
+                //  .style("opacity", 1); 
+                
+                d3.select("#hb").html("");
+                drawHierarchicalBarChart(this.id);
             }
         });
 }
-
-// function filterBySelectedAirport(summary, airportCode) {
-//     summary = summary.filter(item => {
-//         return (item.arrival === airportCode || item.departure === airportCode)
-//     });
-
-//     return summary;
-// }
 
 // draw flights between departure and arrival airport and animate them
 function drawFlights(summary, airportCode) {
@@ -277,14 +256,12 @@ function drawFlights(summary, airportCode) {
     }
 
     const flights = groups.flights;
+    // flights.attr("opacity", 1);
+
     const path = d3.geoPath(projection);
     const planeScale = d3.scaleSqrt()
         .domain(d3.extent(summary, d => d.flights))
         .range([0.3, 2]);
-
-    // console.log(planeScale(26));
-    // console.log(planeScale(2));
-    // console.log(planeScale(50));
 
     function fly(departure, arrival, flightCount) {
 
@@ -433,24 +410,6 @@ function isContinental(state) {
     return id < 60 && id !== 2 && id !== 15;
 }
 
-
-// function typeAirport(airport) {
-//     airport.longitude = parseFloat(airport.longitude);
-//     airport.latitude = parseFloat(airport.latitude);
-
-//     // use projection hard-coded to match topojson data
-//     let coords = projection([airport.longitude, airport.latitude]);
-//     airport.x = coords[0];
-//     airport.y = coords[1];
-
-//     airport.outgoing = 0;  // eventually tracks number of outgoing flights
-//     airport.incoming = 0;  // eventually tracks number of incoming flights
-
-//     airport.flights = [];  // eventually tracks outgoing flights
-
-//     return airport;
-// }
-
 function estimates(obj) {
 
     obj.forEach(item => {
@@ -462,51 +421,6 @@ function estimates(obj) {
     });
 
     return obj;
-}
-
-
-// Draw arcs between airports
-function drawArc(coordinatesObj) {
-
-    const path = d3.geoPath(projection);
-    const arcs = svg.append('g');
-
-    var lineStrings = [];
-    coordinatesObj.forEach(function (obj) {
-        lineStrings.push({
-            type: "LineString",
-            coordinates: [[obj.departLon, obj.departLat],
-            [obj.arrivalLon, obj.arrivalLat]],
-            routes: [obj.departAirportCode, obj.arrivalAirportCode],
-            flight: {
-                icaoNumber: obj.flightIcao,
-                departScheduledTime: obj.departSchTime,
-                arrivalScheduledTime: obj.arrivalSchTime,
-                status: obj.status,
-                currentStatus: obj.currentStatus
-            }
-        });
-    });
-
-
-
-    // Add the path
-    groups.flights.selectAll('path .arcs')
-        .data(lineStrings)
-        .enter()
-        .append('path')
-        .attr('class', 'arcs')
-        .attr('id', d => {
-            return `From: ${d.routes[0]} To: ${d.routes[1]}`
-        })
-        .attr("d", path)
-        .style("fill", "none")
-        .style("stroke", "darkred")
-        .style("stroke-width", 1)
-
-    // anim(lines, lineStrings);
-    // updateTooptips(arcs);
-
 }
 
 

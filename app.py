@@ -1,6 +1,7 @@
 from flask import Flask, render_template, redirect, jsonify, json
 from flask_pymongo import PyMongo
 import pymongo
+import pandas as pd
 import requests
 import os
 
@@ -61,102 +62,138 @@ def get_airport_coords():
     return jsonify(results)
 
 
-# @app.route("/hierarchical-summary/<airport>")
-# def summary_hierarchy(airport):
+@app.route("/hierarchical-summary/<airport>")
+def summary_hierarchy(airport):
 
-#     resp_json = requests.get(f"http://127.0.0.1:5000/get-storeddata/{airport}").json()
+    resp_json = requests.get(f"http://127.0.0.1:5000/get-storeddata/{airport}").json()
 
+    inbound_airports = []
+    outbound_airports = []
+    inbound_airlines = []
+    outbound_airlines = []
+    inbound_delays = []
+    outbound_delays = []
 
-#     inbounds = []
-#     outbounds = []
-#     inbound_airlines = []
-#     outbound_airlines = []
-#     inbound_delays = []
-#     outbound_delays = []
+    for route in resp_json:
+        inbound = route.get('arrival').get('iataCode')
+        outbound = route.get('departure').get('iataCode')
 
-#     for route in resp_json:
-#         inbound = route.get('arrival').get('iataCode')
-#         outbound = route.get('departure').get('iataCode')
-        
-#         if (airport == inbound):
-#             origin_for_inbound = outbound
-#             inbound_airline = route.get('airline').get('name')
+        if (airport == inbound):
+            origin_for_inbound = outbound
+            inbound_airline = route.get('airline').get('name')
 
-#             inbounds.append(origin_for_inbound)
-#             inbound_airlines.append(inbound_airline)
+            inbound_airports.append(origin_for_inbound)
+            inbound_airlines.append(inbound_airline)
+            delay = route.get('arrival').get('delay')
+            
+            if delay:
+                delay = int(delay)
+                if (delay > 60):
+                    delay = "delay > 60"
+                elif (30 <= delay <= 60):
+                    delay = "30 ≥ delay ≥ 60"
+                elif (delay < 30):
+                    delay = "delay ≤ 30"
+                else:  # delay is null
+                    pass
+                inbound_delays.append(delay)
+            else:
+                inbound_delays.append(delay)
 
-#             delay = int(route.get('arrival').get('delay'))
-#             if (delay > 60):
-#                 delay = "delay > 60"
-#             elif (30 <= delay <= 60):
-#                 delay = "30 ≥ delay ≥ 60"
-#             elif (delay < 30):
-#                 delay = "delay ≤ 30"
-#             else:  # delay is null
-#                 pass
-#             inbound_delays.append(delay)
+        else: # airport != inbound (== outbound)
+            destination_for_outbound = inbound
+            outbound_airline = route.get('airline').get('name')
 
-#         else: # airport != inbound (== outbound)
-#             destination_for_outbound = inbound
-#             outbound_airline = route.get('airline').get('name')
-
-#             outbounds.append(destination_for_outbound)
-#             outbound_airlines.append(outbound_airline)
-
-#             delay = int(route.get('arrival').get('delay'))
-#             if (delay > 60):
-#                 delay = "delay > 60"
-#             elif (30 <= delay <= 60):
-#                 delay = "30 ≥ delay ≥ 60"
-#             elif (delay < 30):
-#                 delay = "delay ≤ 30"
-#             else:  # delay is null
-#                 pass
-#             outbound_delays.append(delay)
-
-
-#     # parent = []
-#     # inbound = []
-#     # outbound = []
-#     # inbound_airports = []
-#     # outbound_airports = []
-#     # inbound_delay = []
-#     # outbound_delay = []
-
-
-#     # parent = { 'name' : airport, 'children' : parent }
-#     # children1 = { 'name' : 'inbound', 'children' : inbound }
-#     # children2 = { ''}
-
-#     # for route in resp_json:
-#     #     if (airport == route.get('arrival').get('iataCode')):
-#     #         i_delay = route.get('arrival').get('delay')
-#     #         i_airline = route.get('airline').get('name')
-#     #         i_airport = route.get('departure').get('iataCode')
-
-#     #         inbound_delay.append(i_delay)
-#     #         inbound_airlines.append(i_airline)
-#     #         inbound_airports.append(i_airport)
-#     #     else:
-#     #         o_delay = route.get('departure').get('delay')
-#     #         o_airline = route.get('airline').get('name')
-#     #         o_airport = route.get('arrival').get('iataCode')
-
-#     #         outbound_delay.append(o_delay)
-#     #         outbound_airlines.append(o_airline)
-#     #         outbound_airports.append(o_airport)
+            outbound_airports.append(destination_for_outbound)
+            outbound_airlines.append(outbound_airline)
+            delay = route.get('arrival').get('delay')
+            
+            if delay:
+                delay = int(delay)
+                if (delay > 60):
+                    delay = "delay > 60"
+                elif (30 <= delay <= 60):
+                    delay = "30 ≥ delay ≥ 60"
+                elif (delay < 30):
+                    delay = "delay ≤ 30"
+                else:  # delay is null
+                    pass
+                outbound_delays.append(delay)
+            else:
+                outbound_delays.append(delay)
     
-#     # inbound_airports_children = []
-#     # for i_airline, i_delay in zip(inbound_airlines, inbound_delay):
-#     #     inbound_airports_children.append({
-#     #         'name' : i_airline,
-#     #         'value' : i_delay
-#     #     })
+     
+    assert (len(inbound_airports) == len(inbound_airlines)) and (len(inbound_airlines) == len(inbound_delays))
+    assert (len(outbound_airports) == len(outbound_airlines)) and (len(outbound_airlines) == len(outbound_delays))
     
-#     # for i_airport, child in zip(inbound_airports, inbound_airports_children):
+    inbound_parent = ["inbound" for _ in range(len(inbound_airports))]
+    outbound_parent = ["outbound" for _ in range(len(outbound_airports))]    
+    
+    def make_rawdata(parent, airports, airlines, delays):
+        to_dataframe = []
+        for a, b, c, d in zip(parent, airports, airlines, delays):
+            to_dataframe.append(
+                {"parent" : a,
+                "airport" : b,
+                "airline" : c,
+                "delay" : d})
+
+        df = pd.DataFrame.from_records(to_dataframe)
+        df['delay'] = df['delay'].map(lambda x: x if x is not None else "N/A")
+        df_modified = df.groupby(['parent', 'airport', 'airline', 'delay']).agg({'delay': 'count'}).sort_values(by=['airport', 'airline'])
+        df_modified = df_modified.rename(columns={"delay" : "count"}).reset_index()
+
+        master_dict = {}
+        for row in df_modified.itertuples():
+            master_dict[(row[1], row[2], row[3], row[4])] = master_dict.get((row[1], row[2], row[3], row[4]),0) + row[5]
+
+        temp1_dict = defaultdict(list)
+        for key, value in master_dict.items():
+            temp1_dict[(key[0], key[1], key[2])].append({ key[3] : value })
+
+        temp2_dict = defaultdict(list)
+        for key, value in temp1_dict.items():
+            temp2_dict[(key[0], key[1])].append({ key[2] : value })
+
+        temp3_dict = defaultdict(list)
+        for key, value in temp2_dict.items():
+            temp3_dict[key[0]].append({ key[1] : value })
+
+        temp4_list = []
+        for _, item in enumerate(*temp3_dict.values()):
+            children = []
+            for key, value in item.items():
+                children.append(value)
+                temp4_list.append({ "name" : key, "children" : value })
+
+        temp5_list = []
+        for item in temp4_list:  # a dictionary
+    #     for key, value in item.items(): # a dictionary
+            children = []
+            for key, value in item.items():
+                if key == 'name':
+                    temp = { "name" : value, "children" : [] }   # "ABQ"
+                else: # children
+                    for airline in value:
+                        for k1, v1 in airline.items():
+                            temp2 = { "name" : k1, "children" : [] }
+                            
+                            for delay in v1:                        
+                                for k2, v2 in delay.items():
+                                    temp3 = {"name" : k2, "value" : v2}
+                                    temp2['children'].append(temp3)
+                            temp['children'].append(temp2)
+            temp5_list.append(temp)
+        return temp5_list
 
 
-    
+    inbound_children = make_rawdata(inbound_parent, inbound_airports, inbound_airlines, inbound_delays)
+    outbound_children = make_rawdata(outbound_parent, outbound_airports, outbound_airlines, outbound_delays)
+    results_dict = {"name" : airport, "children" : [ { "name" : "inbound", "children" : inbound_children }, \
+                                                         { "name" : "outbound", "children" : outbound_children } ]}
+
+    return jsonify(results_dict)
+
 
 # Route that will trigger the scrape function
 @app.route("/store-data")
@@ -175,8 +212,6 @@ def store_data():
 
         depart_airport = schedule.get('departure').get('iataCode')
         arrival_airport = schedule.get('arrival').get('iataCode')
-
-        # if (airport_ref[depart_airport] == 'US') and (airport_ref[arrival_airport] == 'US'):
 
         if (depart_airport in major_airports) and (arrival_airport in major_airports):
 
