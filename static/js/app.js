@@ -102,8 +102,9 @@ function timeConverterToUTC(UNIX_timestamp) {
     return time;
 }
 
-
-const svgWidth = 960;
+// was 960
+const svgWidth = 960; 
+// was 800
 const svgHeight = 800;
 const rotated = 100; // for mercator()
 
@@ -156,7 +157,7 @@ function processData(responses) {
 
     // console.log(timeTable);
     // console.log(Object.keys(flightSummary).length);
-    // console.log(flightSummary);
+    console.log(flightSummary);
 
     drawFlights(flightSummary);
 
