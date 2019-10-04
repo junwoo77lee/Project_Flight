@@ -89,23 +89,23 @@ function timeConverterToLocale(UNIX_timestamp) {
     return time;
 }
 
-function timeConverterToUTC(UNIX_timestamp) {
-    var a = new Date(UNIX_timestamp * 1000);
-    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    var year = a.getUTCFullYear();
-    var month = (a.getUTCMonth() + 1) < 10 ? `0${(a.getUTCMonth() + 1)}` : (a.getUTCMonth() + 1); //months[a.getUTCMonth()];
-    var date = a.getUTCDate();
-    var hour = a.getUTCHours() < 10 ? `0${a.getUTCHours()}` : a.getUTCHours();
-    var min = a.getUTCMinutes() < 10 ? `0${a.getUTCMinutes()}` : a.getUTCMinutes();
-    var sec = a.getUTCSeconds() < 10 ? `0${a.getUTCSeconds()}` : a.getUTCSeconds();
-    var time = `${year}-${month}-${date} ${hour}:${min}:${sec}`;
-    return time;
-}
+// function timeConverterToUTC(UNIX_timestamp) {
+//     var a = new Date(UNIX_timestamp * 1000);
+//     var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+//     var year = a.getUTCFullYear();
+//     var month = (a.getUTCMonth() + 1) < 10 ? `0${(a.getUTCMonth() + 1)}` : (a.getUTCMonth() + 1); //months[a.getUTCMonth()];
+//     var date = a.getUTCDate();
+//     var hour = a.getUTCHours() < 10 ? `0${a.getUTCHours()}` : a.getUTCHours();
+//     var min = a.getUTCMinutes() < 10 ? `0${a.getUTCMinutes()}` : a.getUTCMinutes();
+//     var sec = a.getUTCSeconds() < 10 ? `0${a.getUTCSeconds()}` : a.getUTCSeconds();
+//     var time = `${year}-${month}-${date} ${hour}:${min}:${sec}`;
+//     return time;
+// }
 
 
 const svgWidth = 960;
 const svgHeight = 800;
-const rotated = 100; // for mercator()
+// const rotated = 100; // for mercator()
 
 const svg = d3.select('#container').append('svg')
     .attr('viewBox', `0 0 ${svgWidth} ${svgHeight}`)
@@ -126,11 +126,12 @@ const projection = d3.geoAlbers()
 // .translate([svgWidth / 2, svgHeight / 2])
 
 const urls = {
-    timeTable: '/get-storeddata', // departure, arrival airports, flight number, status
+    timeTable: '/get-storeddata/total', // departure, arrival airports, flight number, status
     flightSummary: '/summarize-timetable', // to have a slim version of dataset which contains only departure airport, arrival airport and each flight counts between two locations.
     tracker: '/get-flighttracker', // flight coordinates, status
     // airport: '/get-airportinfo', // flight coordinates, status
     map: 'https://unpkg.com/us-atlas@1/us/10m.json', // GeoJSON for US states
+    airports: '/airport_coords' // draw airport locations with circle
     // cities: '/get-cityinfo' // city information to match city iataCode
 };
 
@@ -141,24 +142,38 @@ d3.json(urls.map).then(drawMap);
 const promises = [
     d3.json(urls.timeTable),
     d3.json(urls.flightSummary),
-    d3.json(urls.tracker)
-    // d3.json(urls.airport),
+    d3.json(urls.tracker),
+    d3.json(urls.airports)
     // d3.json(urls.cities)
 ];
 
-Promise.all(promises).then(processData);
+Promise.all(promises).then(dataArray => {
+    console.log("All promises are fulfilled!");
+    processData(dataArray);
+});
 
 function processData(responses) {
 
     const timeTable = responses[0];
     const flightSummary = responses[1];
     const tracker = responses[2];
+    const airports = responses[3];
 
-    // console.log(timeTable);
+    console.log(timeTable);
     // console.log(Object.keys(flightSummary).length);
-    // console.log(flightSummary);
+    console.log(flightSummary);
 
-    drawFlights(flightSummary);
+    drawAirports(airports, flightSummary); // When click an airport, the flight animation restarts based on the clicked airport and only for it.
+
+    const airportCode = null; // should be interacting with DOM
+
+    // if (airportCode) {
+    //     const reducedSummary = filterBySelectedAirport(flightSummary, airportCode);
+    //     // console.log(reducedSummary);
+    //     drawFlights(reducedSummary);
+    // } else {
+    drawFlights(flightSummary, airportCode);
+    // };
 
     // Reorganize airport timetable data into an object
     // let masterObj = mergeData(timeTable, tracker);//, airportInfo, cityInfo);
@@ -181,33 +196,97 @@ function processData(responses) {
 
 }
 
+function drawAirports(airportCoords, flightSummary) {
+
+    const airports = groups.airports;
+    console.log(airportCoords);
+
+    let isClicked = false;
+    let clickedId;
+    airports.selectAll('circle .airport')
+        .data(airportCoords)
+        .enter()
+        .append('circle')
+        .attr('class', 'airport')
+        .attr('id', d => d.airport_iatacode)
+        .attr('cx', d => projection(d.airport_coords)[0])
+        .attr('cy', d => projection(d.airport_coords)[1])
+        .attr('r', 8)
+        .attr('fill', 'white')
+        .on('mouseover', function () {
+            if (this.id === clickedId) {
+                isClicked = true;
+            } else {
+                isClicked = false;
+                d3.select(this)
+                    .attr('fill', 'rgb(232, 231, 189)')
+                    .attr('stroke-width', 3)
+                    .attr('box-shadow', '5px rgba(0,0,0,0.2)');
+                
+                //     .attr('fill', 'red') //d3.rgb(232, 231, 189))
+                //     // .attr('box-shadow', '5px rgba(0,0,0,0.2)')
+            }
+        })
+        .on('mouseout', function () {
+            if (isClicked === false) {
+                d3.select(this)
+                    .attr('fill', 'white')
+                    .attr('stroke-width', 1)
+                    .attr('stroke', '#252525');
+            }
+        })
+        .on('click', function () {
+            if (isClicked = true && (this.id === clickedId)) {
+            } else {
+                // Implement the unclicked effect for previously clicked airport
+                d3.select(`circle#${clickedId}`)
+                    .attr('fill', 'white')
+                    .attr('stroke-width', 1)
+                    .attr('stroke', '#252525');
+
+                isClicked = true;
+                clickedId = this.id;
+                d3.select(this)
+                    .attr('fill', 'red')
+                    .attr('stroke-width', 3)
+                    .attr('stroke', 'black');
+
+                console.log(this.id);
+                d3.select("#flights").html("");
+                clearInterval(refreshIntervalId);  // refresh the looping of "setInterval"
+                drawFlights(flightSummary, this.id);
+            }
+        });
+}
+
+// function filterBySelectedAirport(summary, airportCode) {
+//     summary = summary.filter(item => {
+//         return (item.arrival === airportCode || item.departure === airportCode)
+//     });
+
+//     return summary;
+// }
+
 // draw flights between departure and arrival airport and animate them
-function drawFlights(summary) {
+function drawFlights(summary, airportCode) {
+
+    if (airportCode) {
+        summary = summary.filter(item => {
+            return (item.arrival === airportCode || item.departure === airportCode)
+        });
+    }
 
     const flights = groups.flights;
     const path = d3.geoPath(projection);
-    const planeScale = d3.scaleLinear()
+    const planeScale = d3.scaleSqrt()
         .domain(d3.extent(summary, d => d.flights))
-        .range([1, 5]);
+        .range([0.3, 2]);
 
     // console.log(planeScale(26));
     // console.log(planeScale(2));
     // console.log(planeScale(50));
 
     function fly(departure, arrival, flightCount) {
-
-        // // const enter = flights.selectAll("path .route")
-        // //     .data(summary, function(d) {
-        // //         return { type: "LineString", coordinates: [d.departure_coords, d.arrival_coords] } 
-        // //     }).enter()
-
-        // enter.append("path")
-        //     .attr("class", "route")
-        //     .attr("d", path);
-
-        // enter.append("path")
-        //     .attr("class", "plane")
-        //     .attr("d", "m25.21488,3.93375c-0.44355,0 -0.84275,0.18332 -1.17933,0.51592c-0.33397,0.33267 -0.61055,0.80884 -0.84275,1.40377c-0.45922,1.18911 -0.74362,2.85964 -0.89755,4.86085c-0.15655,1.99729 -0.18263,4.32223 -0.11741,6.81118c-5.51835,2.26427 -16.7116,6.93857 -17.60916,7.98223c-1.19759,1.38937 -0.81143,2.98095 -0.32874,4.03902l18.39971,-3.74549c0.38616,4.88048 0.94192,9.7138 1.42461,13.50099c-1.80032,0.52703 -5.1609,1.56679 -5.85232,2.21255c-0.95496,0.88711 -0.95496,3.75718 -0.95496,3.75718l7.53,-0.61316c0.17743,1.23545 0.28701,1.95767 0.28701,1.95767l0.01304,0.06557l0.06002,0l0.13829,0l0.0574,0l0.01043,-0.06557c0,0 0.11218,-0.72222 0.28961,-1.95767l7.53164,0.61316c0,0 0,-2.87006 -0.95496,-3.75718c-0.69044,-0.64577 -4.05363,-1.68813 -5.85133,-2.21516c0.48009,-3.77545 1.03061,-8.58921 1.42198,-13.45404l18.18207,3.70115c0.48009,-1.05806 0.86881,-2.64965 -0.32617,-4.03902c-0.88969,-1.03062 -11.81147,-5.60054 -17.39409,-7.89352c0.06524,-2.52287 0.04175,-4.88024 -0.1148,-6.89989l0,-0.00476c-0.15655,-1.99844 -0.44094,-3.6683 -0.90277,-4.8561c-0.22699,-0.59493 -0.50356,-1.07111 -0.83754,-1.40377c-0.33658,-0.3326 -0.73578,-0.51592 -1.18194,-0.51592l0,0l-0.00001,0l0,0z");
 
         var route = flights.append("path")
             .datum({ type: "LineString", coordinates: [departure, arrival] })
@@ -237,6 +316,9 @@ function drawFlights(summary) {
 
         return function (i) {
             return function (t) {
+                if (t > 1) {
+                    console.log(t);
+                };
 
                 var p = arc.getPointAtLength(t * l);
 
@@ -247,7 +329,14 @@ function drawFlights(summary) {
                 var y = p2.y - p.y;
                 var r = 90 - Math.atan2(-y, x) * 180 / Math.PI;
 
-                var s = Math.min(Math.sin(Math.PI * t) * 0.7 * planeScale(flightCount), 0.3);
+                var s = Math.min(Math.sin(Math.PI * t) * 0.7, 0.3);
+
+                // let s;
+                // if (t <= 0.5) {
+                //     s = (l /300) * ((planeScale(flightCount) / 0.5) * t) + 0.2;
+                // } else {
+                //     s = (l /300) * ((planeScale(flightCount) / 0.5) * (1 - t)) + 0.2;
+                // };
 
                 return `translate(${p.x}, ${p.y}) scale(${s}) rotate(${r})`;
             }
@@ -255,93 +344,31 @@ function drawFlights(summary) {
     }
 
     let i = 0;
-    setInterval(function () {
+    window.refreshIntervalId = setInterval(function () {
         if (i > summary.length - 1) {
             i = 0;
         }
         var pair = summary[i];
-        
+
         // fly(summary);
         fly(pair.departure_coords, pair.arrival_coords, pair.flights);
-        
+
         i++;
-    }, 50);
+    }, 150);
 
 }
 
 
-function mergeData(timeTable, tracker) { //, airportInfo, cityInfo) {
-
-    // let masterObj = [];
-    // // timetable is based on type="arrival" dataset
-    // masterObj = timeTable.map(item => {
-    //     return {
-    //         status: item.status,
-    //         departAirportCode: item.departure.iataCode,
-    //         departDelay: parseInt(item.departure.delay),
-    //         departSchTime: item.departure.scheduledTime,
-    //         departLat: item.departLat,
-    //         departLon: item.departLon,
-    //         departTimeZone: item.departAirportTimezone,
-    //         departCity: item.departCityCode,
-    //         arrivalAirportCode: item.arrival.iataCode,
-    //         arrivalDelay: parseInt(item.arrival.delay),
-    //         arrivalSchTime: item.arrival.scheduledTime,
-    //         arrivalLat: item.arrivalLat,
-    //         arrivalLon: item.arrivalLon,
-    //         arrivalTimeZone: item.arrivalAirportTimezone,
-    //         arrivalCity: item.arrivalCityCode,
-    //         airlineName: item.airline.name,
-    //         airlineIataCode: item.airline.iataCode,
-    //         airlineIcaoCode: item.airline.icaoCode,
-    //         flightIataCode: item.flight.iataNumber,
-    //         flightIcaoCode: item.flight.icaoNumber,
-    //         departSchTimeUTC: moment.tz(item.departSchTime, item.departAirportTimezone).utc().format(),
-    //         arrivalSchTimeUTC: moment.tz(item.arrivalSchTime, item.arrivalAirportTimezone).utc().format(),
-    //         duration: ((moment.tz(item.arrivalSchTime, item.arrivalAirportTimezone).utc().valueOf() -
-    //             moment.tz(item.departSchTime, item.departAirportTimezone).utc().valueOf()) / 1000) / 60 / 60 // unit: hours
-    //     }
-    // });
+function mergeData(timeTable, tracker) {
 
     timeTable.forEach(item => {
-        // return {
-        // status: item.status,
-        // departAirportCode: item.departure.iataCode,
         item.departure.delay = item.departure.delay !== null ? parseInt(item.departure.delay) : null;
-        // departSchTime: item.departure.scheduledTime,
-        // departLat: item.departLat,
-        // departLon: item.departLon,
-        // departTimeZone: item.departAirportTimezone,
-        // departCity: item.departCityCode,
-        // arrivalAirportCode: item.arrival.iataCode,
         item.arrival.delay = item.arrival.delay !== null ? parseInt(item.arrival.delay) : null;
-        // arrivalDelay: parseInt(item.arrival.delay),
-        // arrivalSchTime: item.arrival.scheduledTime,
-        // arrivalLat: item.arrivalLat,
-        // arrivalLon: item.arrivalLon,
-        // arrivalTimeZone: item.arrivalAirportTimezone,
-        // arrivalCity: item.arrivalCityCode,
-        // airlineName: item.airline.name,
-        // airlineIataCode: item.airline.iataCode,
-        // airlineIcaoCode: item.airline.icaoCode,
-        // flightIataCode: item.flight.iataNumber,
-        // flightIcaoCode: item.flight.icaoNumber,
         item['departSchTimeUTC'] = moment.tz(item.departure.scheduledTime, item.departAirportTimezone).utc().format();
         item['arrivalSchTimeUTC'] = moment.tz(item.arrival.scheduledTime, item.arrivalAirportTimezone).utc().format();
         item['duration'] = ((moment.tz(item.arrival.scheduledTime, item.arrivalAirportTimezone).utc().valueOf() -
             moment.tz(item.departure.scheduledTime, item.departAirportTimezone).utc().valueOf()) / 1000) / 60 / 60 // unit: hours
-        // }
     });
-    // // Calculate the duration between departure and arrival time after adjusting the timezone difference
-    // // Use moment.js library to do this
-    // masterObj.forEach(item => {
-    //     if (item.arrivalSchTime && item.departSchTime) {
-    //         item['departSchTimeUTC'] = moment.tz(item.departSchTime, item.departAirportTimezone).utc().format();
-    //         item['arrivalSchTimeUTC'] = moment.tz(item.arrivalSchTime, item.arrivalAirportTimezone).utc().format();
-    //         item['duration'] = ((moment.tz(item.arrivalSchTime, item.arrivalAirportTimezone).utc().valueOf() -
-    //             moment.tz(item.departSchTime, item.departAirportTimezone).utc().valueOf()) / 1000) / 60 / 60 // unit: hours
-    //     }
-    // });
 
     // Merge with Flight tracker dataset to extract currenct positon, speed, and direction
     tracker.forEach(flight => {
@@ -364,17 +391,6 @@ function mergeData(timeTable, tracker) { //, airportInfo, cityInfo) {
             }
         });
     });
-
-    // cityInfo.forEach(city => {
-    //     masterObj.forEach(item => {
-    //         if (item.departCityCode == city.codeIataCity) {
-    //             item['departCityName'] = city.nameCity;
-    //         }
-    //         if (item.arrivalCityCode == city.codeIataCity) {
-    //             item['arrivalCityName'] = city.nameCity;
-    //         }
-    //     });
-    // });
 
     return timeTable;
 }
@@ -418,22 +434,22 @@ function isContinental(state) {
 }
 
 
-function typeAirport(airport) {
-    airport.longitude = parseFloat(airport.longitude);
-    airport.latitude = parseFloat(airport.latitude);
+// function typeAirport(airport) {
+//     airport.longitude = parseFloat(airport.longitude);
+//     airport.latitude = parseFloat(airport.latitude);
 
-    // use projection hard-coded to match topojson data
-    let coords = projection([airport.longitude, airport.latitude]);
-    airport.x = coords[0];
-    airport.y = coords[1];
+//     // use projection hard-coded to match topojson data
+//     let coords = projection([airport.longitude, airport.latitude]);
+//     airport.x = coords[0];
+//     airport.y = coords[1];
 
-    airport.outgoing = 0;  // eventually tracks number of outgoing flights
-    airport.incoming = 0;  // eventually tracks number of incoming flights
+//     airport.outgoing = 0;  // eventually tracks number of outgoing flights
+//     airport.incoming = 0;  // eventually tracks number of incoming flights
 
-    airport.flights = [];  // eventually tracks outgoing flights
+//     airport.flights = [];  // eventually tracks outgoing flights
 
-    return airport;
-}
+//     return airport;
+// }
 
 function estimates(obj) {
 
@@ -472,16 +488,6 @@ function drawArc(coordinatesObj) {
         });
     });
 
-    // console.log(lineStrings);
-
-    // lineStrings.forEach(d => {
-    //     d.coordinates.forEach(c => {
-    //         if (!c[0] || !c[1]) {
-    //             console.log(d);
-    //         }
-    //     });
-    // });
-
 
 
     // Add the path
@@ -503,54 +509,6 @@ function drawArc(coordinatesObj) {
 
 }
 
-
-function twoArc(c) {
-    var source = projection(c[0]),
-        target = projection(c[1]),
-        mid = projection([
-            (source[0] + target[0] - (Math.sqrt(3)) * (target[1] - source[1])) / 2,
-            (source[1] + target[1] + (Math.sqrt(3)) * (target[0] - source[0])) / 2
-        ]);
-    // mid = [(source[0] + target[0]) / 2, (source[1] + target[1]) / 2],
-    // dx1 = mid[0] - source[0],
-    // dx2 = target[0] - mid[0],
-    // dy1 = mid[1] - source[1],
-    // dy2 = target[1] - mid[1],
-    // dr1 = Math.sqrt(dx1 * dx1 + dy1 * dy1),
-    // dr2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-
-    // var rv = "M";
-    // rv += source[0] + "," + source[1];
-    // rv += "A" + dr1 + "," + dr1 + " 0 0,1 ";
-    // rv += mid[0] + "," + mid[1];
-    // rv += "A" + dr2 + "," + dr2 + " 0 0,0 ";
-    // rv += target[0] + "," + target[1];
-
-    let rv = "M";
-    rv += source[0] + "," + source[1];
-    rv += "Q" + mid[0] + "," + mid[1];
-    rv += target[0] + "," + target[1];
-
-    return rv;
-}
-
-function anim(lines, lineStrings) {
-
-    lines.data(lineStrings)
-        .attr('d', string => {
-            return twoArc(string.coordinates);
-        });
-
-    lines.transition()
-        .duration(2000)
-        .attrTween("stroke-dasharray", function () {
-            var len = this.getTotalLength();
-            return function (t) {
-                return (d3.interpolateString("0," + len, len + ",0"))(t)
-            };
-        })
-        .on('end', anim);
-}
 
 function updateTooptips(arcGroup) {
 

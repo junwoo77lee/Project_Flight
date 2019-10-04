@@ -22,10 +22,17 @@ body {
   }
   
   .airport {
-    fill: white;
+    /* fill: white; */
     opacity: 0.6;
     stroke: #252525;
   }
+
+  /* .airport:hover {
+    fill: rgb(232, 231, 189);
+    opacity: 0.6;
+    box-shadow: 5px rgba(0,0,0,0.2);
+    stroke: #252525;
+  } */
 
   .route {
     fill: none;

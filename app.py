@@ -23,26 +23,140 @@ airport_url = 'http://aviation-edge.com/v2/public/airportDatabase'
 ap_params = {'key': api_key}
 airport_json = requests.get(airport_url, params=ap_params).json()
 
+# US 61 busiest airports from wikipedia
+major_airports = {'ABQ', 'ANC', 'ATL', 'AUS', 'BDL', 'BHM', 'BNA', 'BOS', 'BUF', 'BUR', 'BWI', 'CLE', 'CLT', 'CMH', 'CVG', 'DAL', 'DCA', 'DEN', 'DFW', 'DTW', 'EWR', 'FLL', 'HNL', 'HOU', 'IAD', 'IAH', 'IND', 'JAX', 'JFK',
+                  'LAS', 'LAX', 'LGA', 'MCI', 'MCO', 'MDW', 'MIA', 'MKE', 'MSP', 'MSY', 'OAK', 'OGG', 'OMA', 'ONT', 'ORD', 'PBI', 'PDX', 'PHL', 'PHX', 'PIT', 'RDU', 'RSW', 'SAN', 'SAT', 'SEA', 'SFO', 'SJC', 'SLC', 'SMF', 'SNA', 'STL', 'TPA'}
+
 # for quick search: O(1)
-airport_ref = {}
+# airport_ref = {}
 airport_coords = {}
 for airport in airport_json:
-    airport_ref[airport.get('codeIataAirport')
-                ] = airport.get('codeIso2Country')
-    airport_coords[airport.get('codeIataAirport')] = [float(airport.get('longitudeAirport')),
-                                                      float(airport.get('latitudeAirport'))]
+    airport_code = airport.get('codeIataAirport')
+    if airport_code in major_airports:
+        # airport_ref[airport.get('codeIataAirport')] = airport.get('codeIso2Country')
+        airport_coords[airport.get('codeIataAirport')] = [float(airport.get('longitudeAirport')),
+                                                          float(airport.get('latitudeAirport'))]
 
 
 # Route to render index.html template using data from Mongo
 @app.route("/")
 def home():
-
-    # Find one record of data from the mongo database
-    #
-
-    # Return template and data
-    # render_template("index.html", vacation=destination_data)
+    # Showing a map at first
     return render_template("index.html")
+
+
+@app.route("/airport_coords")
+def get_airport_coords():
+
+    results = []
+    for airport in airport_json:
+        airport_code = airport.get('codeIataAirport')
+        if airport_code in major_airports:
+            results.append(
+                {'airport_iatacode': airport_code,
+                 'airport_coords': [float(airport.get('longitudeAirport')),
+                                    float(airport.get('latitudeAirport'))]
+                 })
+
+    return jsonify(results)
+
+
+# @app.route("/hierarchical-summary/<airport>")
+# def summary_hierarchy(airport):
+
+#     resp_json = requests.get(f"http://127.0.0.1:5000/get-storeddata/{airport}").json()
+
+
+#     inbounds = []
+#     outbounds = []
+#     inbound_airlines = []
+#     outbound_airlines = []
+#     inbound_delays = []
+#     outbound_delays = []
+
+#     for route in resp_json:
+#         inbound = route.get('arrival').get('iataCode')
+#         outbound = route.get('departure').get('iataCode')
+        
+#         if (airport == inbound):
+#             origin_for_inbound = outbound
+#             inbound_airline = route.get('airline').get('name')
+
+#             inbounds.append(origin_for_inbound)
+#             inbound_airlines.append(inbound_airline)
+
+#             delay = int(route.get('arrival').get('delay'))
+#             if (delay > 60):
+#                 delay = "delay > 60"
+#             elif (30 <= delay <= 60):
+#                 delay = "30 ≥ delay ≥ 60"
+#             elif (delay < 30):
+#                 delay = "delay ≤ 30"
+#             else:  # delay is null
+#                 pass
+#             inbound_delays.append(delay)
+
+#         else: # airport != inbound (== outbound)
+#             destination_for_outbound = inbound
+#             outbound_airline = route.get('airline').get('name')
+
+#             outbounds.append(destination_for_outbound)
+#             outbound_airlines.append(outbound_airline)
+
+#             delay = int(route.get('arrival').get('delay'))
+#             if (delay > 60):
+#                 delay = "delay > 60"
+#             elif (30 <= delay <= 60):
+#                 delay = "30 ≥ delay ≥ 60"
+#             elif (delay < 30):
+#                 delay = "delay ≤ 30"
+#             else:  # delay is null
+#                 pass
+#             outbound_delays.append(delay)
+
+
+#     # parent = []
+#     # inbound = []
+#     # outbound = []
+#     # inbound_airports = []
+#     # outbound_airports = []
+#     # inbound_delay = []
+#     # outbound_delay = []
+
+
+#     # parent = { 'name' : airport, 'children' : parent }
+#     # children1 = { 'name' : 'inbound', 'children' : inbound }
+#     # children2 = { ''}
+
+#     # for route in resp_json:
+#     #     if (airport == route.get('arrival').get('iataCode')):
+#     #         i_delay = route.get('arrival').get('delay')
+#     #         i_airline = route.get('airline').get('name')
+#     #         i_airport = route.get('departure').get('iataCode')
+
+#     #         inbound_delay.append(i_delay)
+#     #         inbound_airlines.append(i_airline)
+#     #         inbound_airports.append(i_airport)
+#     #     else:
+#     #         o_delay = route.get('departure').get('delay')
+#     #         o_airline = route.get('airline').get('name')
+#     #         o_airport = route.get('arrival').get('iataCode')
+
+#     #         outbound_delay.append(o_delay)
+#     #         outbound_airlines.append(o_airline)
+#     #         outbound_airports.append(o_airport)
+    
+#     # inbound_airports_children = []
+#     # for i_airline, i_delay in zip(inbound_airlines, inbound_delay):
+#     #     inbound_airports_children.append({
+#     #         'name' : i_airline,
+#     #         'value' : i_delay
+#     #     })
+    
+#     # for i_airport, child in zip(inbound_airports, inbound_airports_children):
+
+
+    
 
 # Route that will trigger the scrape function
 @app.route("/store-data")
@@ -56,59 +170,40 @@ def store_data():
                  }
     timetable_json = requests.get(timetable_url, params=tt_params).json()
 
-    # get a airport information dataset to join with the dataset from above
-    # in order to filter out non-US airports
-    # airport_url = 'http://aviation-edge.com/v2/public/airportDatabase'
-    # ap_params = {'key': api_key}
-    # airport_json = requests.get(airport_url, params=ap_params).json()
-
-    # # for quick search: O(1)
-    # airport_ref = {}
-    # for airport in airport_json:
-    #     airport_ref[airport.get('codeIataAirport')] = airport.get('codeIso2Country')
-
-    # US 61 busiest airports from wikipedia
-    major_airports = {'ABQ', 'ANC', 'ATL', 'AUS', 'BDL', 'BHM', 'BNA', 'BOS', 'BUF', 'BUR', 'BWI', 'CLE', 'CLT', 'CMH', 'CVG', 'DAL', 'DCA', 'DEN', 'DFW', 'DTW', 'EWR', 'FLL', 'HNL', 'HOU', 'IAD', 'IAH', 'IND', 'JAX', 'JFK',
-                      'LAS', 'LAX', 'LGA', 'MCI', 'MCO', 'MDW', 'MIA', 'MKE', 'MSP', 'MSY', 'OAK', 'OGG', 'OMA', 'ONT', 'ORD', 'PBI', 'PDX', 'PHL', 'PHX', 'PIT', 'RDU', 'RSW', 'SAN', 'SAT', 'SEA', 'SFO', 'SJC', 'SLC', 'SMF', 'SNA', 'STL', 'TPA'}
-
     results = []
     for schedule in timetable_json:
 
         depart_airport = schedule.get('departure').get('iataCode')
         arrival_airport = schedule.get('arrival').get('iataCode')
 
-        if (airport_ref[depart_airport] == 'US') and (airport_ref[arrival_airport] == 'US'):
+        # if (airport_ref[depart_airport] == 'US') and (airport_ref[arrival_airport] == 'US'):
 
-            if (depart_airport in major_airports) and (arrival_airport in major_airports):
+        if (depart_airport in major_airports) and (arrival_airport in major_airports):
 
-                for airport in airport_json:
-                    if depart_airport == airport.get('codeIataAirport'):
-                        schedule['departLat'] = float(
-                            airport.get('latitudeAirport'))
-                        schedule['departLon'] = float(
-                            airport.get('longitudeAirport'))
-                        schedule['departAirportTimezone'] = airport.get(
-                            'timezone')
-                        schedule['departCityCode'] = airport.get(
-                            'codeIataCity')
+            for airport in airport_json:
+                if depart_airport == airport.get('codeIataAirport'):
+                    schedule['departLat'] = float(
+                        airport.get('latitudeAirport'))
+                    schedule['departLon'] = float(
+                        airport.get('longitudeAirport'))
+                    schedule['departAirportTimezone'] = airport.get('timezone')
+                    schedule['departCityCode'] = airport.get('codeIataCity')
 
-                    elif arrival_airport == airport.get('codeIataAirport'):
-                        schedule['arrivalLat'] = float(
-                            airport.get('latitudeAirport'))
-                        schedule['arrivalLon'] = float(
-                            airport.get('longitudeAirport'))
-                        schedule['arrivalAirportTimezone'] = airport.get(
-                            'timezone')
-                        schedule['arrivalCityCode'] = airport.get(
-                            'codeIataCity')
+                elif arrival_airport == airport.get('codeIataAirport'):
+                    schedule['arrivalLat'] = float(
+                        airport.get('latitudeAirport'))
+                    schedule['arrivalLon'] = float(
+                        airport.get('longitudeAirport'))
+                    schedule['arrivalAirportTimezone'] = airport.get(
+                        'timezone')
+                    schedule['arrivalCityCode'] = airport.get('codeIataCity')
 
-                results.append(schedule)
+            results.append(schedule)
 
     # insert to the Mongo database
     myclient = pymongo.MongoClient("mongodb://localhost:27017/")
     mydb = myclient["flight_app"]
     mycol = mydb["timetable"]
-    # x = mycol.insert_many(result_json)
 
     mycol.create_index([("arrival", pymongo.ASCENDING),
                         ("departure", pymongo.ASCENDING),
@@ -148,15 +243,20 @@ def store_data():
     return f"Posting Done (insert: {count_insert} / update: {count_update} records)"
 
 
-@app.route("/get-storeddata")
-def get_storeddata():
+@app.route("/get-storeddata/<airport>")
+def get_storeddata(airport):
+    # option is either "total" or airport iata code (ex. "DEN")
 
     results = []
     data = mongo.db.timetable.find({}, {"_id": 0})
 
-    for schedule in data:
-        # schedule['_id'] = str(schedule['_id'])
-        results.append(schedule)
+    if (airport == "total"):
+        for schedule in data:
+            results.append(schedule)
+    else:
+        for schedule in data:
+            if ((airport == schedule.get('arrival').get('iataCode')) or (airport == schedule.get('departure').get('iataCode'))):
+                results.append(schedule)
 
     return jsonify(results)
 
@@ -227,7 +327,7 @@ def get_storeddata():
 @app.route("/summarize-timetable")
 def summarize_timetable():
 
-    resp_json = requests.get("http://127.0.0.1:5000/get-storeddata").json()
+    resp_json = requests.get("http://127.0.0.1:5000/get-storeddata/total").json()
 
     # results is a dictionary of dictionaries
     counts = {}  # defaultdict(Counter)
@@ -270,7 +370,6 @@ def post_flight_tracker():
     myclient = pymongo.MongoClient("mongodb://localhost:27017/")
     mydb = myclient["flight_app"]
     mycol = mydb["flighttracker"]
-    # x = mycol.insert_many(result_json)
 
     mycol.create_index([("aircraft", pymongo.ASCENDING),
                         ("airline", pymongo.ASCENDING),
