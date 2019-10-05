@@ -5,7 +5,7 @@ import pandas as pd
 import requests
 import os, re
 from collections import defaultdict
-api_key = os.environ.get('FLIGHT_API_KEY', '')
+api_key = ('1abf86-e75651')
 # This allows "requests" module to access local server
 # os.environ['NO_PROXY'] = '127.0.0.1'
 
@@ -69,6 +69,10 @@ def home():
 
     return render_template("index.html")
 
+@app.route("/airport-timetable")
+def keit_page():
+
+    return render_template("keit.html")
 
 @app.route("/airport_coords")
 def get_airport_coords():
