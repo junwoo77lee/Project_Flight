@@ -1,10 +1,12 @@
+// source: Mike Bostock's https://observablehq.com/@d3/hierarchical-bar-chart
+
 function drawHierarchicalBarChart(airport) {
 
-    const barStep = 27;
-    const barPadding = 3 / barStep;
+    const barStep = 50;
+    const barPadding = 5 / barStep;
     const duration = 750;
-    const margin = ({ top: 30, right: 30, bottom: 0, left: 100 });
-    const width = document.documentElement.clientWidth;
+    const margin = ({ top: 30, right: 30, bottom: 0, left: 300 });
+    const width = document.documentElement.clientWidth + 200;
     let height = 894;
 
     const x = d3.scaleLinear()
@@ -14,8 +16,9 @@ function drawHierarchicalBarChart(airport) {
 
     const xAxis = g => g
         .attr("class", "x-axis")
+        .style("font", "30px sans-serif")
         .attr("transform", `translate(0,${margin.top})`)
-        .call(d3.axisTop(x).ticks(width / 80, "s"))
+        .call(d3.axisTop(x).ticks(width / (width * 0.08), "s"))
         .call(g => (g.selection ? g.selection() : g).select(".domain").remove());
 
     const yAxis = g => g
@@ -26,48 +29,55 @@ function drawHierarchicalBarChart(airport) {
             .attr("y1", margin.top)
             .attr("y2", height - margin.bottom));
 
-    // d3.json("https://raw.githubusercontent.com/d3/d3-hierarchy/v1.1.8/test/data/flare.json")
+    // Before d3.json fetching data, the loader run
+    d3.select("#loader")
+        .attr('transform', `translate(${width} + 500, ${height}) + 500`)
+        .style("visibility", "visible")
+
+    // load airport statistis dataset
     d3.json(`http://127.0.0.1:5000/hierarchical-summary/${airport}`)
         .then(response => {
-
-            const root = d3.hierarchy(response)
-                .sum(d => d.value)
-                .sort((a, b) => b.value - a.value)
-                .eachAfter(d => d.index = d.parent ? d.parent.index = d.parent.index + 1 || 0 : 0);
-
-            console.log(root);
-
-          
-            let max = 1;
-            root.each(d => d.children && (max = Math.max(max, d.children.length)));
-            height = max * barStep + margin.top + margin.bottom;
-          
-            console.log(height);
-
-            const svg = d3.select("#hb").append("svg")
-                .attr('viewBox', `0 0 ${width} ${height}`)
-                .attr('preserveAspectRatio', 'xMinYMin');
-
-            svg.append("rect")
-                .attr("class", "background")
-                .attr("fill", "none")
-                .attr("pointer-events", "all")
-                .attr("width", width)
-                .attr("height", height)
-                .attr("cursor", "pointer")
-                .on("click", d => up(svg, d));
-
-            svg.append("g")
-                .call(xAxis);
-
-            svg.append("g")
-                .call(yAxis);
-
-            down(svg, root);
-
-            // return svg.node();
-
+            d3.select("#loader")
+                .style("visibility", "hidden")
+            initialize(response);
         });
+
+
+    function initialize(hierarchicalData) {
+
+        const root = d3.hierarchy(hierarchicalData)
+            .sum(d => d.value)
+            .sort((a, b) => b.value - a.value)
+            .eachAfter(d => d.index = d.parent ? d.parent.index = d.parent.index + 1 || 0 : 0);
+
+        let max = 1;
+        root.each(d => d.children && (max = Math.max(max, d.children.length)));
+        height = max * barStep + margin.top + margin.bottom;
+
+        const svg = d3.select("#hb").append("svg")
+            .attr('viewBox', `0 0 ${width} ${height}`)
+            .attr('preserveAspectRatio', 'xMinYMin');
+
+        svg.append("rect")
+            .attr("class", "background")
+            .attr("fill", "none")
+            .attr("pointer-events", "all")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("cursor", "pointer")
+            .on("click", d => up(svg, d));
+
+        svg.append("g")
+            .call(xAxis);
+
+        svg.append("g")
+            .call(yAxis);
+
+        down(svg, root);
+
+        // return svg.node();
+
+    }
 
 
     // Creates a set of bars for the given data node, at the specified index.
@@ -76,7 +86,7 @@ function drawHierarchicalBarChart(airport) {
             .attr("class", "enter")
             .attr("transform", `translate(0,${margin.top + barStep * barPadding})`)
             .attr("text-anchor", "end")
-            .style("font", "10px sans-serif");
+            .style("font", "30px sans-serif");
 
         const bar = g.selectAll("g")
             .data(d.children)
@@ -85,13 +95,11 @@ function drawHierarchicalBarChart(airport) {
             .on("click", d => down(svg, d));
 
         bar.append("text")
+            .attr("class", "bar-text")
             .attr("x", margin.left - 6)
             .attr("y", barStep * (1 - barPadding) / 2)
             .attr("dy", ".35em")
-            .text(d => {
-                // console.log(d.data.name);
-                return d.data.name;
-            });
+            .text(d => d.data.name);
 
         bar.append("rect")
             .attr("x", x(0))
@@ -219,7 +227,7 @@ function drawHierarchicalBarChart(airport) {
             .attr("fill-opacity", p => p === d ? 0 : null)
             .transition(transition2)
             .attr("width", d => x(d.value) - x(0))
-            .on("end", function (p) { d3.select(this).attr("fill-opacity", 1); });
+            .on("end", function(p) { d3.select(this).attr("fill-opacity", 1); });
     }
 
     function stack(i) {

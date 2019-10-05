@@ -2,48 +2,107 @@
 <html lang="en">
 
 <head>
-  <title>Flight App</title>
-  <!-- Required meta tags -->
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Flight App</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-  <!-- Project CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <!-- Project CSS -->
+    <!-- loader: 'npm install loadme' -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/loadme.css') }}">
+    <!-- user style.css -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
-  <div class="container">
-    <div class="row">
-      <div class="col-12">
-        <div id="container"></div>
-      </div>
-    </div>
-  </div>
-  <!-- Optional JavaScript -->
-  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-    crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-    crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
-    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-    crossorigin="anonymous"></script>
+    <div class="container-fluid">
+        <nav class="navbar navbar-light" style="background-color: #e3f2fd;">
+            <a class="navbar-brand" href="index.html">
+                <h3>The 61 busiest US Airports</h3>
+            </a>
+        </nav>
 
-  <script type="text/javascript" src="https://d3js.org/d3.v5.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.9.1/d3-tip.js"></script>
+        <!-- loader: display until the Promise datasets are all fufilled  -->
+        <g id="loader">
+            <div class="loadme-circular"></div>
+            <div class="loadme-mask">
+                <p id="loading-text">Loading...</p>
+            </div>
+        </g>
 
-  <!-- Special JS libraries for project -->
-  <script src="https://unpkg.com/topojson@3"></script>
-  <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/moment-timezone-with-data.min.js') }}"></script>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <div id="d3-map"></div>
+                </div>
+                <div class="col-md-4">
+                    <div id="airportInfo"></div>
+                </div>
+            </div>
+        </div>
 
-  <!-- main JS code -->
-  <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
+        <div class="container">
+            <div class="form-group">
+                <div class="row">
+                    <div class="col-md">
+                        <label for="airportSelector">
+              <h5>US Airport</h5>
+            </label>
+                        <select class="form-control" id="airportSelector">
+              <!-- <option>airport1</option> -->
+            </select>
+                    </div>
+                    <div class="col-md">
+                        <label for="exampleFormControlSelect1">
+              <h5>Departure Date</h5>
+            </label>
+                        <select class="form-control" id="exampleFormControlSelect1">
+              <option>date1</option>
+              <option>date2</option>
+              <option>date3</option>
+              <option>date4</option>
+              <option>date5</option>
+            </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                <div class="col-md">
+                    <figure>
+                        <img id="flightTracker" src="http://www.airreview.com/VirginAmerica/Virgin-America-Route-Map.jpg" class="figure-img img-fluid rounded" alt="">
+                    </figure>
+                    <p> Airport Cool flight Map</p>
+                </div>
+                <div class="col-md">
+                    <div id='hb'></div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Optional JavaScript -->
+        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+        <script type="text/javascript" src="https://d3js.org/d3.v5.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.9.1/d3-tip.js"></script>
+
+        <!-- Special JS libraries for project -->
+        <script src="https://unpkg.com/topojson@3"></script>
+        <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/moment-timezone-with-data.min.js') }}"></script>
+
+        <!-- main JS code -->
+        <script src="{{ url_for('static', filename='js/hierarchical_barchart.js') }}"></script>
+        <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
 
 </body>
 

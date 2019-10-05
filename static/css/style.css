@@ -1,47 +1,51 @@
 body {
     background-color: white;
-    text-align: center;
+    /* text-align: center; */
     font-family: sans-serif;
-  }
-  
-  .land {
+    font-size: 20px;
+}
+
+.land {
     fill: #dddddd;
-  }
-  
-  .border {
+}
+
+.border {
     fill: none;
     stroke-width: 1px;
-  }
-  
-  .interior {
+}
+
+.interior {
     stroke: white;
-  }
-  
-  .exterior {
+}
+
+.exterior {
     stroke: #bbbbbb;
-  }
-  
-  .airport {
+}
+
+.airport {
     /* fill: white; */
     opacity: 0.6;
     stroke: #252525;
-  }
+}
 
-  /* .airport:hover {
+
+/* .airport:hover {
     fill: rgb(232, 231, 189);
     opacity: 0.6;
     box-shadow: 5px rgba(0,0,0,0.2);
     stroke: #252525;
   } */
 
-  .route {
+.route {
     fill: none;
     stroke-width: 0;
 }
-  .plane {
+
+.plane {
     fill: #000;
     stroke-width: 0;
 }
+
 
 /* .countries {
     fill: #b0d0ab;
@@ -59,3 +63,23 @@ body {
     stroke-linejoin: round;
     vector-effect: non-scaling-stroke;
 } */
+
+.bar-text {
+    font-size: 30px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    hyphens: auto;
+}
+
+#loading-text {
+    background-color: #fff;
+    width: 50%;
+    height: 50%;
+    position: relative;
+    z-index: 99;
+    /* left: 51.5%;
+    top: 60%; */
+    margin: -50px 0 0 -50px;
+    border-radius: 10px;
+    opacity: 1;
+}
