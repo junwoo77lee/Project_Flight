@@ -8,7 +8,7 @@ import requests
 import os
 import re
 from collections import defaultdict
-api_key = ('1abf86-e75651')
+api_key = os.environ.get('FLIGHT_API_KEY', '')
 # This allows "requests" module to access local server
 # os.environ['NO_PROXY'] = '127.0.0.1'
 
