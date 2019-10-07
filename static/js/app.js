@@ -126,17 +126,15 @@ const projection = d3.geoAlbers()
 // .translate([svgWidth / 2, svgHeight / 2])
 
 const urls = {
-    timeTable: '/get-storeddata/total', // departure, arrival airports, flight number, status
-    flightSummary: '/summarize-timetable', // to have a slim version of dataset which contains only departure airport, arrival airport and each flight counts between two locations.
+    // timeTable: '/get-storeddata/total', // departure, arrival airports, flight number, status
+    flightSummary: '/summarize-timetable-slim', // to have a slim version of dataset which contains only departure airport, arrival airport and each flight counts between two locations.
     tracker: '/get-flighttracker', // flight coordinates, status
-    // airport: '/get-airportinfo', // flight coordinates, status
     map: 'https://unpkg.com/us-atlas@1/us/10m.json', // GeoJSON for US states
-    airports: '/airport_coords' // draw airport locations with circle
+    airports: '/airport_coords', // draw airport locations with circle
 };
 
 const promises = [
     d3.json(urls.map),
-    d3.json(urls.timeTable),
     d3.json(urls.flightSummary),
     d3.json(urls.tracker),
     d3.json(urls.airports)
@@ -150,10 +148,10 @@ Promise.all(promises).then(dataArray => {
 function processData(responses) {
 
     const geojson = responses[0];
-    const timeTable = responses[1];
-    const flightSummary = responses[2];
-    const tracker = responses[3];
-    const airports = responses[4];
+    // const timeTable = responses[1];
+    const flightSummary = responses[1];
+    const tracker = responses[2];
+    const airports = responses[3];
     const airport_menu = d3.select('#airportSelector')
 
     // Organize selections on drop-down menus
@@ -200,6 +198,7 @@ function drawAirports(airportCoords, flightSummary) {
 
     let isClicked = false;
     let clickedId;
+
     airports.selectAll('circle .airport')
         .data(airportCoords)
         .enter()
@@ -344,42 +343,73 @@ function drawFlights(summary, airportCode) {
 }
 
 
-function mergeData(timeTable, tracker) {
+multivariateChart("DEN"); // call the function with an sample argument "DEN". We need to change this a variable containing airport code.
+
+function multivariateChart(airport) {
+
+    d3.json(`http://127.0.0.1:5000/summary-multivariate-chart/${airport}`)
+        .then(response => {
+            const dateTime = mergeData(response);
+            console.log(dateTime);
+        });
+}
+
+
+function mergeData(timeTable) { //}, tracker) {
 
     timeTable.forEach(item => {
-        item.departure.delay = item.departure.delay !== null ? parseInt(item.departure.delay) : null;
-        item.arrival.delay = item.arrival.delay !== null ? parseInt(item.arrival.delay) : null;
-        item['departSchTimeUTC'] = moment.tz(item.departure.scheduledTime, item.departAirportTimezone).utc().format();
-        item['arrivalSchTimeUTC'] = moment.tz(item.arrival.scheduledTime, item.arrivalAirportTimezone).utc().format();
-        item['duration'] = ((moment.tz(item.arrival.scheduledTime, item.arrivalAirportTimezone).utc().valueOf() -
-                moment.tz(item.departure.scheduledTime, item.departAirportTimezone).utc().valueOf()) / 1000) / 60 / 60 // unit: hours
+        // item.departure.delay = item.departure.delay !== null ? parseInt(item.departure.delay) : null;
+        // item.arrival.delay = item.arrival.delay !== null ? parseInt(item.arrival.delay) : null;
+        // item['departSchTimeUTC'] = moment.tz(item.departure.scheduledTime, item.departAirportTimezone).utc().format();
+        // item['arrivalSchTimeUTC'] = moment.tz(item.arrival.scheduledTime, item.arrivalAirportTimezone).utc().format();
+        item['duration'] = ((moment.tz(item.destination_date, item.destination_timezone).utc().valueOf() -
+                moment.tz(item.origin_date, item.origin_timezone).utc().valueOf()) / 1000) / 60 / 60 // unit: hours
+
+        let source = new LatLon(item.origin_coords[1], item.origin_coords[0]);
+        let target = new LatLon(item.destination_coords[1], item.destination_coords[0]);
+
+        item.distance = source.distanceTo(target, 3959); // unit: miles
+        item.midPoint = source.midpointTo(target).toGeoJSON(); // Lon Lat
     });
 
     // Merge with Flight tracker dataset to extract currenct positon, speed, and direction
-    tracker.forEach(flight => {
-        timeTable.forEach(item => {
+    // tracker.forEach(flight => {
+    //     timeTable.forEach(item => {
 
-            const tracker_update = timeConverterToLocale(Number(flight.system.updated))
+    //         const tracker_update = timeConverterToLocale(Number(flight.system.updated))
 
-            if ((item.departAirportCode === flight.departure.iataCode) &&
-                (item.arrivalAirportCode === flight.arrival.iataCode) &&
-                (item.flightIcaoCode === flight.flight.icaoNumber) &&
-                (item.departSchTime.slice(0, 10) === tracker_update.slice(0, 10))) {
-                item['currentLat'] = flight.geography.latitude;
-                item['currentLon'] = flight.geography.longitude;
-                item['currentAlt'] = flight.geography.altitude;
-                item['currentDirection'] = flight.geography.direction;
-                item['currentSpeedH'] = flight.speed.horizontal;
-                item['currentSpeedV'] = flight.speed.vertical;
-                item['currentStatus'] = flight.status;
-                item['currentUpdateAt'] = tracker_update; // Unix timestamp is based on UTC (== 'GMT -0'), but it is converted to be based on local time
-            }
-        });
-    });
+    //         if ((item.departAirportCode === flight.departure.iataCode) &&
+    //             (item.arrivalAirportCode === flight.arrival.iataCode) &&
+    //             (item.flightIcaoCode === flight.flight.icaoNumber) &&
+    //             (item.departSchTime.slice(0, 10) === tracker_update.slice(0, 10))) {
+    //             item['currentLat'] = flight.geography.latitude;
+    //             item['currentLon'] = flight.geography.longitude;
+    //             item['currentAlt'] = flight.geography.altitude;
+    //             item['currentDirection'] = flight.geography.direction;
+    //             item['currentSpeedH'] = flight.speed.horizontal;
+    //             item['currentSpeedV'] = flight.speed.vertical;
+    //             item['currentStatus'] = flight.status;
+    //             item['currentUpdateAt'] = tracker_update; // Unix timestamp is based on UTC (== 'GMT -0'), but it is converted to be based on local time
+    //         }
+    //     });
+    // });
 
     return timeTable;
 }
 
+
+function estimates(obj) {
+
+    obj.forEach(item => {
+        let source = new LatLon(item.departLat, item.departLon);
+        let target = new LatLon(item.arrivalLat, item.arrivalLon);
+
+        item.distance = source.distanceTo(target); // unit: meter
+        item.midPoint = source.midpointTo(target).toGeoJSON(); // Lon Lat
+    });
+
+    return obj;
+}
 
 // draws the underlying map
 function drawMap(map) {
@@ -413,22 +443,10 @@ function drawMap(map) {
         .attr("d", path);
 }
 
+
 function isContinental(state) {
     var id = parseInt(state.id);
     return id < 60 && id !== 2 && id !== 15;
-}
-
-function estimates(obj) {
-
-    obj.forEach(item => {
-        let source = new LatLon(item.departLat, item.departLon);
-        let target = new LatLon(item.arrivalLat, item.arrivalLon);
-
-        item.distance = source.distanceTo(target); // unit: meter
-        item.midPoint = source.midpointTo(target).toGeoJSON(); // Lon Lat
-    });
-
-    return obj;
 }
 
 

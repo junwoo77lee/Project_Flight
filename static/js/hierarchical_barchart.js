@@ -16,7 +16,7 @@ function drawHierarchicalBarChart(airport) {
 
     const xAxis = g => g
         .attr("class", "x-axis")
-        .style("font", "30px sans-serif")
+        // .style("font", "30px sans-serif")
         .attr("transform", `translate(0,${margin.top})`)
         .call(d3.axisTop(x).ticks(width / (width * 0.08), "s"))
         .call(g => (g.selection ? g.selection() : g).select(".domain").remove());
@@ -37,6 +37,7 @@ function drawHierarchicalBarChart(airport) {
     // load airport statistis dataset
     d3.json(`http://127.0.0.1:5000/hierarchical-summary/${airport}`)
         .then(response => {
+
             d3.select("#loader")
                 .style("visibility", "hidden")
             initialize(response);
@@ -85,8 +86,8 @@ function drawHierarchicalBarChart(airport) {
         const g = svg.insert("g", selector)
             .attr("class", "enter")
             .attr("transform", `translate(0,${margin.top + barStep * barPadding})`)
-            .attr("text-anchor", "end")
-            .style("font", "30px sans-serif");
+            .attr("text-anchor", "end");
+        // .style("font", "30px sans-serif");
 
         const bar = g.selectAll("g")
             .data(d.children)
