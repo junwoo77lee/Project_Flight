@@ -1,16 +1,27 @@
 import LatLon from "https://cdn.jsdelivr.net/npm/geodesy@2.2.0/latlon-spherical.min.js"
 
+
+const width = document.documentElement.clientWidth;
+const height = document.documentElement.clientHeight;
 // Various formatters.
 // call the function with an sample argument "DEN". We need to change this a variable containing airport code.
-export default function multivariateChart(airport) {
+export default function multivariateChart(airport, boundType) {
+    // boundType is either "arrival" or "departure"
+
+    // Before d3.json fetching data, the loader run
+    d3.select("#loader")
+        .attr('transform', `translate(${width} + 500, ${height}) + 500`)
+        .style("visibility", "visible")
 
     d3v3.json(`http://127.0.0.1:5000/summary-multivariate-chart/${airport}`, function(error, response) {
         if (error) throw error;
 
+        d3.select("#loader")
+            .style("visibility", "hidden")
+
         const dateTime = mergeData(response);
 
-        const flights = make_rawdata(dateTime, "arrival");
-
+        const flights = make_rawdata(dateTime, airport, boundType);
         // A little coercion, since the CSV is untyped.
         flights.forEach(function(d, i) {
             // console.log(d);
@@ -20,13 +31,19 @@ export default function multivariateChart(airport) {
             d.distance = parseFloat(d.distance);
         });
 
-        function make_rawdata(obj, type) {
+        function make_rawdata(obj, airport, type) {
             const results = []
-            if (type = "arrival") {
+            let date;
+            let converted_date;
+
+            if (type = "arrival") { // Inbound
                 obj.forEach(item => {
-                    // "2019-10-01T00:33:00.000"
-                    const date = item.destination_date
-                    const converted_date = `${date.slice(5, 7)}${date.slice(8, 10)}${date.slice(11, 13)}${date.slice(14, 16)}`;
+                    if (item.destination === airport) {
+                        date = item.destination_date
+                    } else { // === departure
+                        date = item.origin_date
+                    }
+                    converted_date = `${date.slice(5, 7)}${date.slice(8, 10)}${date.slice(11, 13)}${date.slice(14, 16)}`;
                     results.push({
                         "date": converted_date,
                         "duration": item.duration * 60,
@@ -35,14 +52,17 @@ export default function multivariateChart(airport) {
                         "destination": item.destination
                     });
                 });
-            } else {
+            } else { // departure (Outbound)
                 obj.forEach(item => {
-                    // "2019-10-01T00:33:00.000"
-                    const date = item.origin_date
-                    const converted_date = `${date.slice(5, 7)}${date.slice(8, 10)}${date.slice(11, 13)}${date.slice(14, 16)}`;
+                    if (item.origin === airport) {
+                        date = item.origin_date
+                    } else { // === departure
+                        date = item.destination_date
+                    }
+                    converted_date = `${date.slice(5, 7)}${date.slice(8, 10)}${date.slice(11, 13)}${date.slice(14, 16)}`;
                     results.push({
                         "date": converted_date,
-                        "duration": item.duration,
+                        "duration": item.duration * 60,
                         "distance": item.distance,
                         "origin": item.origin,
                         "destination": item.destination

@@ -19,7 +19,9 @@
 <body>
     <div class="container">
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a class="navbar-brand" href="/#">Top 61 US Aiports</a>
+            <a class="navbar-brand" href="/#">
+                <h2 style="color: yellow;"><strong>Top 61 US Airports</strong></h2>
+            </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -34,17 +36,26 @@
         </nav>
     </div>
     <!-- radio buttons to select flight animation mode -->
-    <div class="container">
-        <!-- <h2>Form control: inline radio buttons</h2> -->
-        <!-- <p>The form below contains three inline radio buttons:</p> -->
-        <form>
-            <label class="radio-inline">
-                <input id="unlimited" type="radio" name="optradio" checked> Flights Animation
-            </label>
-            <label class="radio-inline">
-                <input id="current-flights" type="radio" name="optradio"> Flights Location
-            </label>
-        </form>
+    <div class="container mt-4 ml-2">
+        <div class="row">
+            <div class="col-md-4">
+                <form>
+                    <label class="radio-inline">
+                        <input id="unlimited" type="radio" name="optradio" checked> <span>Flights Animation</span>
+                    </label>
+                    <label class="radio-inline ml-2">
+                        <input id="current-flights" type="radio" name="optradio"> <span>Flights Location</span>
+                    </label>
+                </form>
+
+            </div>
+            <div class="col-md-4">
+                <div id="legend"></div>
+            </div>
+            <div class="col-md-4">
+
+            </div>
+        </div>
     </div>
 
     <!-- loader: display until the Promise datasets are all fufilled  -->
@@ -75,7 +86,7 @@
                 <div class="col-md-6">
                     <label for="airportSelector">
                         <p style="font-size: 14px; margin-bottom: 0.25em;"><span class="notice">Choose</span> an airport
-                            in the menu or <span class="notice">Click</span> one on the map</p>
+                            below or <span class="notice">Click</span> an airport location on the map</p>
                     </label>
                     <select class="form-control" id="airportSelector">
                         <!-- <option>airport1</option> -->
@@ -88,38 +99,53 @@
     <hr>
     <div class="container">
         <div class="row">
-            <div class="col-md-12">
-                <h4>Stats by Date & Time</h4>
-                <div id="body">
-                    <div id="charts">
-                        <div id="hour-chart" class="chart">
-                            <div class="title">Time of Day</div>
+            <div class="col-md-8 mt-2">
+                <h5>[Airport Data by Date and Time]</h5>
+            </div>
+            <div class="col-md-4">
+                <form>
+                    <label class="radio-inline">
+                        <input id="departure" type="radio" name="bound-type" checked> <span> Outbound </span>
+                    </label>
+                    <label class="radio-inline ml-2">
+                        <input id="arrival" type="radio" name="bound-type"> <span> Inbound </span>
+                    </label>
+                </form>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="body">
+                        <div id="charts">
+
+                            <div id="hour-chart" class="chart">
+                                <div class="title"><em>Time of Day</em></div>
+                            </div>
+
+                            <div id="duration-chart" class="chart">
+                                <div class="title"><em>Duration (min.)</em></div>
+                            </div>
+
+                            <div id="distance-chart" class="chart">
+                                <div class="title"><em>Distance (mi.)</em></div>
+                            </div>
+
+                            <div id="date-chart" class="chart">
+                                <div class="title"><em>Date</em></div>
+                            </div>
+
+                            <aside id="totals"><em><span id="active">-</span> of <span id="total">-</span> flights
+                                    selected for the <mark id="bound-type-marker"
+                                        style="font-size: 1.2rem;">-</mark>.</em>
+                            </aside>
                         </div>
-                        <div id="duration-chart" class="chart">
-                            <div class="title">Duration (min.)</div>
-                        </div>
-                        <div id="distance-chart" class="chart">
-                            <div class="title">Distance (mi.)</div>
-                        </div>
-                        <div id="date-chart" class="chart">
-                            <div class="title">Date</div>
-                        </div>
-                        <aside id="totals"><span id="active">-</span> of <span id="total">-</span> flights selected.
-                        </aside>
                     </div>
                 </div>
-
-                <!-- 
-                <div id="lists">
-                    <div id="flight-list" class="list"></div>
-                </div> -->
-
             </div>
         </div>
-
+        <hr>
         <div class="row">
-            <div class="col-md-12">
-                <h4>Stats by Flight Counts</h4>
+            <div class="col-md-12 mt-2">
+                <h5>[Daily Inbound/Outbound Flight Counts]</h5>
                 <div id='hierarchical-barchart'></div>
             </div>
         </div>

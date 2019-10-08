@@ -50,6 +50,12 @@ body {
     stroke: #252525;
   } */
 
+
+/* 
+#legend {
+    border: 2px solid grey;
+} */
+
 .route {
     fill: none;
     stroke-width: 0;
@@ -62,7 +68,6 @@ body {
 
 .today_route {
     fill: none;
-    stroke: #000;
     stroke-width: 2;
     opacity: 0.05;
 }
@@ -96,7 +101,7 @@ body {
 }
 
 .bar-text {
-    /* font-size: 30px; */
+    font-size: 30px;
     overflow-wrap: break-word;
     word-wrap: break-word;
     hyphens: auto;
@@ -109,6 +114,8 @@ body {
 }
 
 #loading-text {
+    font-size: 2rem;
+    color: black;
     background-color: #fff;
     width: 50%;
     height: 50%;
@@ -134,6 +141,13 @@ body {
     text-rendering: optimizeLegibility;
 }
 
+.chart-title {
+    background-color: #120823;
+    color: yellow;
+    z-index: 99;
+    opacity: 1;
+}
+
 #charts {
     padding: 10px 0;
 }
@@ -155,7 +169,7 @@ body {
 }
 
 .foreground.bar {
-    fill: steelblue;
+    fill: navy;
 }
 
 .axis path,
@@ -170,7 +184,7 @@ body {
 }
 
 .brush rect.extent {
-    fill: steelblue;
+    fill: navy;
     fill-opacity: .125;
 }
 
@@ -232,8 +246,9 @@ body {
 }
 
 aside {
-    position: absolute;
-    left: 740px;
+    position: relative;
+    /* left: 740px; */
     font-size: 15px;
-    width: 220px;
+    color: red;
+    width: 350px;
 }

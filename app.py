@@ -10,13 +10,9 @@ import re
 from datetime import datetime
 from collections import defaultdict
 api_key = os.environ.get('FLIGHT_API_KEY', '')
-# This allows "requests" module to access local server
-# os.environ['NO_PROXY'] = '127.0.0.1'
 
 # Create an instance of Flask
 app = Flask(__name__)
-# app.config['JSON_SORT_KEYS'] = False
-# app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
 # Replace Flask-original jasonify for performance boost
 def jsonify(*args, **kwargs):
@@ -35,132 +31,24 @@ def jsonify(*args, **kwargs):
 # Use PyMongo to establish Mongo connection
 mongo = PyMongo(app, uri="mongodb://localhost:27017/flight_app")
 
-
 # This project will refer to the Top 61 US airports from wikipedia
 major_airports = {'ABQ', 'ANC', 'ATL', 'AUS', 'BDL', 'BHM', 'BNA', 'BOS', 'BUF', 'BUR', 'BWI', 'CLE', 'CLT', 'CMH', 'CVG', 'DAL', 'DCA', 'DEN', 'DFW', 'DTW', 'EWR', 'FLL', 'HNL', 'HOU', 'IAD', 'IAH', 'IND', 'JAX', 'JFK',
                   'LAS', 'LAX', 'LGA', 'MCI', 'MCO', 'MDW', 'MIA', 'MKE', 'MSP', 'MSY', 'OAK', 'OGG', 'OMA', 'ONT', 'ORD', 'PBI', 'PDX', 'PHL', 'PHX', 'PIT', 'RDU', 'RSW', 'SAN', 'SAT', 'SEA', 'SFO', 'SJC', 'SLC', 'SMF', 'SNA', 'STL', 'TPA'}
 
 
-# def make_references(parse_type):  # parse_type is either airport, city, or both
-
-#     # if SQL
-#     # SELECT adb.codeIataAirport, adb.codeIataCity, adb.nameAirport,
-#     #        adb.timezone, adb.longitudeAirport, adb.latitudeAirport
-#     # FROM airport_db ad
-#     #   Join major_airport ma IN adb.airport_id = ma.airport_id
-#     # WHERE adb.airport_id = ma.airport_id
-
-#     if parse_type == "airport":
-#         # data from airport information API
-#         airport_url = 'http://aviation-edge.com/v2/public/airportDatabase'
-#         ap_params = {'key': api_key}
-#         airport_json = requests.get(airport_url, params=ap_params).json()
-
-# # { "nameAirport" : "Andrews AFB", "codeIataAirport" : "ADW", "latitudeAirport" : "38.816666",
-# #  "longitudeAirport" : "-76.86667", "timezone" : "America/New_York", "codeIataCity" : "ADW" }
-
-
-#         airport_data = mongo.db.airport.find( {"nameCountry": "United States"},                                                                                        
-#                                               {"_id": 0, "airportId": 0, "codeIcaoAirport": 0,
-#                                                "geonameId": 0, "GMT": 0, "phone": 0, "codeIso2Country": 0,
-#                                                "nameCountry": 0})
-        
-#         airport_coords = {}
-#         airport_names = {}
-#         airport_timezone = {}
-#         airport_city = {}
-#         for airport in airport_data:
-#             airport_code = airport.get('codeIataAirport')
-
-#             if airport_code in major_airports:
-#                 # Airport coordinates
-#                 airport_coords[airport_code] = [float(airport.get('longitudeAirport')),
-#                                                 float(airport.get('latitudeAirport'))]
-
-#                 # Airport name
-#                 if airport_code == 'PBI':
-#                     airport_names[airport_code] = "Palm Beach International"
-#                 else:
-#                     airport_names[airport_code] = airport.get(
-#                         'nameAirport') + ' Airport'
-
-#                 # Airport timezone
-#                 airport_timezone[airport_code] = airport.get('timezone')
-
-#                 # Airport citycode
-#                 airport_city[airport_code] = airport.get('codeIataCity')
-
-
-
-#         return airport_json, airport_coords, airport_names, airport_timezone, airport_city
-
-#     elif parse_type == "city":
-#         # data from city information API
-#         city_url = "http://aviation-edge.com/v2/public/cityDatabase"
-#         ct_params = {"key": api_key}
-#         city_json = requests.get(city_url, params=ct_params).json()
-
-#         # For US city-state mapping: source > Wikipedia
-#         df_city_state_pairs = pd.read_html(
-#             "https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population")[4]
-#         df_city_state_pairs['City'] = df_city_state_pairs['City'].map(lambda x: re.sub(
-#             r'\[.+]', '', x)).map(lambda x: x.lower()).map(lambda x: x.replace('.', ''))
-#         df_city_state = df_city_state_pairs[['City', 'State[c]']].rename(
-#             columns={'State[c]': 'State'})
-#         # ex.) {'State': {'New York': 'New York'} }
-#         city_state_dict = df_city_state.set_index('City').to_dict()
-#         # hardcoding for missing values
-#         city_state_dict['State'].update(
-#             {'windsor locks': 'Conneticut', 'covington': 'Kentucky', 'maui': 'Hawaii', 'fort myers': 'Florida'})
-
-#         return city_json, city_state_dict
-
-#     elif parse_type == "both":
-#         # get airport data
-#         airport_json, airport_coords, airport_names, _, _ = make_references(
-#             "airport")
-
-#         # get city data
-#         city_json, city_state_dict = make_references("city")
-
-#         # For getting airport name with city/state information
-#         city_names = {}
-#         for airport in airport_json:
-#             for city in city_json:
-#                 airport_code = airport.get('codeIataAirport')
-#                 airport_city = airport.get('codeIataCity')
-#                 city_code = city.get('codeIataCity')
-#                 city_name = city.get('nameCity')
-
-#                 if airport_city == city_code:
-#                     city_state = f"{city_name} / {city_state_dict['State'].get(city_name.lower())}"
-#                     city_names[airport_code] = city_state
-
-#         return airport_names, airport_coords, city_names
-
-
 @app.route("/")
 def home():
-
     return render_template("index.html")
-
-
-@app.route("/cross_filter_chart")
-def cross_filter_chart():
-
-    return render_template("index_crossfilter.html")
-
-@app.route("/airport-timetable")
-def keit_page():
-
-    return render_template("keit.html")
 
 @app.route("/airport_coords")
 def get_airport_coords():
-
+    # pulling out a reference dictionary from the DB instead of using outside API
+    # to look up useful information faster
+    # It has 5 keys: "airport_name", "airport_coords", "airport_city",
+    # "airport_timezone", "city_names"
     cursor = mongo.db.references.find({}, { "_id" : 0 })
     for d in cursor:
-        reference_dict = d # only one, but huge documentation 
+        reference_dict = d
 
     results = [{'airport_iatacode': airport, 'airport_coords': coord}
                for airport, coord in reference_dict['airport_coords'].items()]
@@ -171,30 +59,29 @@ def get_airport_coords():
 @app.route("/summary-multivariate-chart/<airport>")
 def summary_multivariate(airport):
 
-    #     # date,  duration, distance, origin, destination
-    #     # 01010001, 14,      405,      MCI,     MDW
-
     data_filtered = mongo.db.timetable.find({"$or": [{"departure.iataCode": airport},
                                                      {"arriaval.iataCode": airport}
                                                      ]
                                              }, {"_id": 0})
     result_json = list(data_filtered)
 
+    # pulling out a reference dictionary from the DB instead of using outside API
+    # to look up useful information faster
+    # It has 5 keys: "airport_name", "airport_coords", "airport_city",
+    # "airport_timezone", "city_names"
     cursor = mongo.db.references.find({}, { "_id" : 0 })
     for d in cursor:
-        reference_dict = d # only one, but huge documentation 
+        reference_dict = d 
 
     results = []
     for flight in result_json:
         departure_airport = flight.get('departure').get('iataCode')
         arrival_airport = flight.get('arrival').get('iataCode')
 
-        # if (airport == departure_airport):
         departure_time = flight.get('departure').get('scheduledTime')
         departure_timezone = reference_dict['airport_timezones'][departure_airport]
         arrival_time = flight.get('arrival').get('scheduledTime')
         arrival_timezone = reference_dict['airport_timezones'][arrival_airport]
-        # else: # (airport == arrival_airport):
 
         departure_coords = reference_dict['airport_coords'][departure_airport]
         arrival_coords = reference_dict['airport_coords'][arrival_airport]
@@ -331,7 +218,6 @@ def summary_hierarchy(airport):
 
         temp2_list = []
         for item in temp1_list:  # a dictionary
-            #     for key, value in item.items(): # a dictionary
             children = []
             for key, value in item.items():
                 if key == 'name':
@@ -375,9 +261,13 @@ def store_data():
     timetable_json = requests.get(timetable_url, params=tt_params).json()
 
     results = []
+    # pulling out a reference dictionary from the DB instead of using outside API
+    # to look up useful information faster
+    # It has 5 keys: "airport_name", "airport_coords", "airport_city",
+    # "airport_timezone", "city_names"
     cursor = mongo.db.references.find({}, { "_id" : 0 })
     for d in cursor:
-        reference_dict = d # only one, but huge documentation 
+        reference_dict = d 
 
     for schedule in timetable_json:
 
@@ -386,21 +276,12 @@ def store_data():
 
         if (depart_airport in major_airports) and (arrival_airport in major_airports):
 
-            # for airport in airport_json:
-            # if depart_airport == airport.get('codeIataAirport'):
-            # schedule['departLat'] = float(
-            #     airport.get('latitudeAirport'))
             schedule['departLat'] = reference_dict['airport_coords'][depart_airport][1]
             schedule['departLon'] = reference_dict['airport_coords'][depart_airport][0]
 
             schedule['departAirportTimezone'] = reference_dict['airport_timezones'][depart_airport]
             schedule['departCityCode'] = reference_dict['airport_cities'][depart_airport]
 
-        # elif arrival_airport == airport.get('codeIataAirport'):
-            # schedule['arrivalLat'] = float(
-            #     airport.get('latitudeAirport'))
-            # schedule['arrivalLon'] = float( 
-            #     airport.get('longitudeAirport'))
             schedule['arrivalLat'] = reference_dict['airport_coords'][arrival_airport][1]
             schedule['arrivalLon'] = reference_dict['airport_coords'][arrival_airport][0]
 
@@ -460,22 +341,22 @@ def summarize_timetable_slim():
     resp_json = mongo.db.timetable.find(
         {}, {"departure.iataCode": 1, "arrival.iataCode": 1, "_id": 0})
 
-    # results is a dictionary of dictionaries
+    # results will be a dictionary of dictionaries
     counts = {}
-    # results = []
     for flight in resp_json:
         departure_airport = flight.get('departure').get('iataCode')
         arrival_airport = flight.get('arrival').get('iataCode')
         route = f'{departure_airport}-{arrival_airport}'
         counts[route] = counts.get(route, 0) + 1
 
+    # pulling out a reference dictionary from the DB instead of using outside API
+    # to look up useful information faster
+    # It has 5 keys: "airport_name", "airport_coords", "airport_city",
+    # "airport_timezone", "city_names"
     cursor = mongo.db.references.find({}, { "_id" : 0 })
     for d in cursor:
-        reference_dict = d # only one, but huge documentation 
+        reference_dict = d
     
-    # refernce_dict has 5 keys:
-    # "airport_name", "airport_coords", "airport_city", "airport_timezone", "city_names"
-
     results = []
     for route, flight_counts in counts.items():
         departure = route.split('-')[0]
@@ -498,12 +379,13 @@ def summarize_timetable_slim():
     return jsonify(results)
 
 
+# May not be used anymore
 @app.route("/summarize-timetable")
 def summarize_timetable():
 
     resp_json = mongo.db.timetable.find({}, {"_id": 0})
 
-    # results is a dictionary of dictionaries
+    # results will be a dictionary of dictionaries
     counts = {}
     for flight in resp_json:
         departure_airport = flight.get('departure').get('iataCode')
@@ -511,9 +393,13 @@ def summarize_timetable():
         route = f'{departure_airport}-{arrival_airport}'
         counts[route] = counts.get(route, 0) + 1
 
+    # pulling out a reference dictionary from the DB instead of using outside API
+    # to look up useful information faster
+    # It has 5 keys: "airport_name", "airport_coords", "airport_city",
+    # "airport_timezone", "city_names"
     cursor = mongo.db.references.find({}, { "_id" : 0 })
     for d in cursor:
-        reference_dict = d # only one, but huge documentation 
+        reference_dict = d
 
     results = []
     for route, flight_counts in counts.items():
@@ -539,6 +425,10 @@ def summarize_timetable():
 
 @app.route("/post-references")
 def post_references():
+    # Creating a reference collection instead of using outside APIs 
+    # to look up useful information faster
+    # It has 5 keys: "airport_name", "airport_coords", "airport_city",
+    # "airport_timezone", "city_names"
 
     # AIRPORT reference
     airport_url = 'http://aviation-edge.com/v2/public/airportDatabase'
@@ -623,8 +513,7 @@ def post_references():
 def post_flight_tracker():
 
     base_url = 'http://aviation-edge.com/v2/public/flights'
-    params = {'key': api_key,
-            #   'depIata': 'DEN'
+    params = {'key': api_key
               }
 
     result_json = requests.get(base_url, params=params).json()
@@ -638,11 +527,7 @@ def post_flight_tracker():
                         ("airline", pymongo.ASCENDING),
                         ("arrival", pymongo.ASCENDING),
                         ("departure", pymongo.ASCENDING),
-                        ("flight", pymongo.ASCENDING),
-                        # ("geography", pymongo.ASCENDING),
-                        # ("speed", pymongo.ASCENDING),
-                        # ("status", pymongo.ASCENDING),
-                        # ("system", pymongo.ASCENDING)
+                        ("flight", pymongo.ASCENDING)
                         ], unique=True)
 
     count_insert = 0
@@ -683,13 +568,6 @@ def post_flight_tracker():
 
     return f"Posting Done. (insert: {count_insert} / update: {count_update} records)"
 
-    # for data in result_json:
-    #     try:
-    #         mycol.insert_one(data)
-    #     except:
-    #         pass
-
-    # return "Posting Done."
 
 @app.route("/get-flighttracker")
 def get_flight_tracker():
@@ -723,7 +601,6 @@ def post_airport():
                         ], unique=True)
 
     for data in result_json:
-        # if (data.get('nameCountry') == 'United States'):
         try:
             mycol.insert_one(data)
         except:
@@ -739,7 +616,6 @@ def get_airport():
     airports = mongo.db.airport.find({}, {"_id": 0})
 
     for airport in airports:
-        # airport['_id'] = str(airport['_id'])
         results.append(airport)
 
     return jsonify(results)
@@ -761,7 +637,6 @@ def post_city():
     mycol.create_index([("cityId", pymongo.ASCENDING)], unique=True)
 
     for data in result_json:
-        # if (data.get('nameCountry') == 'United States'):
         try:
             mycol.insert_one(data)
         except:
@@ -808,13 +683,13 @@ def get_today_flights(airport):
                 "flight.icaoNumber" : 1
                 })
 
-
+        # pulling out a reference dictionary from the DB instead of using outside API
+        # to look up useful information faster
+        # It has 5 keys: "airport_name", "airport_coords", "airport_city",
+        # "airport_timezone", "city_names"
         cursor_ref = mongo.db.references.find({}, { "_id" : 0 })
         for d in cursor_ref:
-            reference_dict = d # only one, but huge documentation 
-    
-        # refernce_dict has 5 keys:
-        # "airport_name", "airport_coords", "airport_city", "airport_timezone", "city_names"
+            reference_dict = d
 
         results = []
         for schedule in cursor_filtered:
@@ -836,47 +711,7 @@ def get_today_flights(airport):
                 'flight_icaoNumber' : schedule.get('flight').get('icaoNumber')
             })
 
-
         return jsonify(results)
-
-# db.timetable.aggregate([{ $match: { "departure.scheduledTime" : { $regex: "2019-10-06T.*"}}},
-#  {$lookup: {from: "flighttracker",let: { departure: "$departure.iataCode", arrival: "$arrival.iataCode", flight: "$flight.icaoNumber" },pipeline: [{ $match:{ $expr:{ $and:[{ $eq: [ "$departure.iataCode",  "$$departure" ] },{ $eq: [ "$arrival.iataCode",  "$$arrival" ] },{ $eq: [ "$flight.icaoNumber",  "$$flight" ] }]}}},{ $project: { aircraft: 0, airline: 0, arrival: 0, deparature: 0, flight: 0, _id: 0 } }],as: "flight-tracking"}}])
-                
-        # combined = mongo.db.timetable.aggregate([
-        # { 
-        #     "$match":
-        #         {
-        #         "departure.scheduledTime" : { "$regex" : f"{date}.*"}
-        #         }
-        # },
-        # {
-        #     "$lookup":
-        #         {
-        #         "from": "flighttracker",
-        #         "let": { "departure": "$departure.iataCode", "arrival": "$arrival.iataCode", "flight": "$flight.icaoNumber" },
-        #         "pipeline": [
-        #             { "$match":
-        #                 { "$expr":
-        #                     { "$and":
-        #                     [
-        #                         { "$eq": [ "$departure.iataCode",  "$$departure" ] },
-        #                         { "$eq": [ "$arrival.iataCode",  "$$arrival" ] },
-        #                         { "$eq": [ "$flight.icaoNumber",  "$$flight" ] }
-        #                     ]
-        #                     }
-        #                 }
-        #             },
-        #             { "$project": { "aircraft": 0, "airline": 0, "arrival": 0, "deparature": 0, "flight": 0, "_id": 0 } }
-        #         ],
-        #         "as": "flight-tracking"
-        #         }
-        #     }
-        # ])
-
-        # return jsonify(list(combined))
-
-
-
 
 
 # May not be used anymore
@@ -915,133 +750,7 @@ def get_storeddata(airport):
                 "flight.icaoNumber" : 1
                 })
 
-
-
         return jsonify(list(cursor_filtered))
-
-        # mongo.db.timetable.aggregate([
-        # {
-        #     "$lookup":
-        #         {
-        #         from: "flighttracker",
-        #         let: { departure: "$departure.iataCode", arrival: "$arrival.iataCode", flight: "$flight.icaoNumber" },
-        #         pipeline: [
-        #             { $match:
-        #                 { $expr:
-        #                     { $and:
-        #                     [
-        #                         { $eq: [ "$departure.iataCode",  "$$departure" ] },
-        #                         { $eq: [ "$arrival.iataCode",  "$$arrival" ] },
-        #                         { $eq: [ "$flight.icaoNumber",  "$$flight" ] }
-        #                     ]
-        #                     }
-        #                 }
-        #             },
-        #             { $project: { aircraft: 0, airline: 0, arrival: 0, deparature: 0, flight: 0, _id: 0 } }
-        #         ],
-        #         as: "flight-tracking"
-        #         }
-        #     }
-        # ])
-
-# // FLIGHT TRACKER API
-# // {'aircraft': {'iataCode': 'B738',
-# //               'icao24': '',
-# //               'icaoCode': 'B738',
-# //               'regNumber': 'N76503'},
-# //  'airline': {'iataCode': 'UA', 'icaoCode': 'UAL'},
-# //  'arrival': {'iataCode': 'LGA', 'icaoCode': 'KLGA'},
-# //  'departure': {'iataCode': 'DEN', 'icaoCode': 'KDEN'},
-# //  'flight': {'iataNumber': 'UA406', 'icaoNumber': 'UAL406', 'number': '406'},
-# //  'geography': {'altitude': 11277.6,
-# //                'direction': 88.34,
-# //                'latitude': 42.0506,
-# //                'longitude': -88.4931},
-# //  'speed': {'horizontal': 1024.6, 'isGround': 0, 'vertical': 0},
-# //  'status': 'en-route',
-# //  'system': {'squawk': '6261', 'updated': '1569454200'}}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # Route that will trigger the scrape function
-# @app.route("/post-timetable")
-# def post_timetable():
-#     # Get dataset for both arrival and departure
-#     base_url = 'http://aviation-edge.com/v2/public/timetable'
-#     params = {'key': api_key,
-#               #   'iataCode': 'DEN'
-#               'codeshared': 'Null',
-#               'type': 'arrival'
-#               }
-
-#     result_json = requests.get(base_url, params=params).json()
-
-#     # insert to the Mongo database
-#     myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-#     mydb = myclient["flight_app"]
-#     mycol = mydb["timetable"]
-#     # x = mycol.insert_many(result_json)
-
-#     mycol.create_index([("arrival", pymongo.ASCENDING),
-#                         ("departure", pymongo.ASCENDING),
-#                         ("airline", pymongo.ASCENDING),
-#                         ("flight", pymongo.ASCENDING),
-#                         ("codeshared", pymongo.ASCENDING),
-#                         ("type", pymongo.ASCENDING)
-#                         ], unique=True)
-
-#     for data in result_json:
-#         # if data.get('codeshared') is None:
-#         try:
-#             # assuming that only no codeshared flight is a real one.
-#             mycol.insert_one(data)
-#         except:  # if the duplicate found (status would be different)
-#             # if 'status' is different to an existing document
-
-#             cursor = mycol.find({"arrival": data.get("arrival"),
-#                                  "departure": data.get("departure"),
-#                                  "airline": data.get("airline"),
-#                                  "flight": data.get("flight"),
-#                                  "codeshared": data.get("codeshared")},
-#                                 {"_id": 1})
-#             status = {"$set": {"status": data.get("status")}}
-
-#             for update in cursor:
-#                 mycol.update_one(update, status)
-
-#     return f"Posting Done. ({len(result_json)} records)"
-
-
-# @app.route("/get-timetable")
-# def get_timetable():
-
-#     results = []
-#     timetable = mongo.db.timetable.find({}, {"_id": 0})
-
-#     for schedule in timetable:
-#         # schedule['_id'] = str(schedule['_id'])
-#         results.append(schedule)
-
-#     return jsonify(results)
-
-
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -12,11 +12,11 @@ function drawHierarchicalBarChart(airport) {
     const x = d3.scaleLinear()
         .range([margin.left, width - margin.right]);
 
-    const color = d3.scaleOrdinal([true, false], ["steelblue", "#aaa"]);
+    const color = d3.scaleOrdinal([true, false], ["navy", "#aaa"]);
 
     const xAxis = g => g
         .attr("class", "x-axis")
-        // .style("font", "30px sans-serif")
+        .style("font", "30px sans-serif")
         .attr("transform", `translate(0,${margin.top})`)
         .call(d3.axisTop(x).ticks(width / (width * 0.08), "s"))
         .call(g => (g.selection ? g.selection() : g).select(".domain").remove());
