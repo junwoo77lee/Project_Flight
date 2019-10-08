@@ -2,11 +2,11 @@
 
 function drawHierarchicalBarChart(airport) {
 
-    const barStep = 50;
+    const barStep = 27;
     const barPadding = 5 / barStep;
     const duration = 750;
-    const margin = ({ top: 30, right: 30, bottom: 0, left: 300 });
-    const width = document.documentElement.clientWidth + 200;
+    const margin = ({ top: 30, right: 30, bottom: 0, left: 250 });
+    const width = document.documentElement.clientWidth;
     let height = 894;
 
     const x = d3.scaleLinear()
@@ -40,6 +40,7 @@ function drawHierarchicalBarChart(airport) {
 
             d3.select("#loader")
                 .style("visibility", "hidden")
+
             initialize(response);
         });
 
@@ -55,7 +56,7 @@ function drawHierarchicalBarChart(airport) {
         root.each(d => d.children && (max = Math.max(max, d.children.length)));
         height = max * barStep + margin.top + margin.bottom;
 
-        const svg = d3.select("#hb").append("svg")
+        const svg = d3.select("#hierarchical-barchart").append("svg")
             .attr('viewBox', `0 0 ${width} ${height}`)
             .attr('preserveAspectRatio', 'xMinYMin');
 
