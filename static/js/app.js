@@ -2,33 +2,6 @@
 import LatLon from "https://cdn.jsdelivr.net/npm/geodesy@2.2.0/latlon-spherical.min.js"
 import multivariateChart from '/static/js/cross_filter_chart.js'
 
-function timeConverterToLocale(UNIX_timestamp) {
-    // ISO 8601 format
-    var a = new Date(UNIX_timestamp * 1000);
-    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    var year = a.getFullYear();
-    var month = (a.getMonth() + 1) < 10 ? `0${(a.getMonth() + 1)}` : (a.getMonth() + 1); //months[a.getMonth()];
-    var date = a.getDate();
-    var hour = a.getHours() < 10 ? `0${a.getHours()}` : a.getHours();
-    var min = a.getMinutes() < 10 ? `0${a.getMinutes()}` : a.getMinutes();
-    var sec = a.getSeconds() < 10 ? `0${a.getSeconds()}` : a.getSeconds();
-    var time = `${year}-${month}-${date} ${hour}:${min}:${sec}`;
-    return time;
-}
-
-function timeConverterToUTC(UNIX_timestamp) {
-    var a = new Date(UNIX_timestamp * 1000);
-    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    var year = a.getUTCFullYear();
-    var month = (a.getUTCMonth() + 1) < 10 ? `0${(a.getUTCMonth() + 1)}` : (a.getUTCMonth() + 1); //months[a.getUTCMonth()];
-    var date = a.getUTCDate() < 10 ? `0${a.getUTCDate()}` : a.getUTCDate();
-    var hour = a.getUTCHours() < 10 ? `0${a.getUTCHours()}` : a.getUTCHours();
-    var min = a.getUTCMinutes() < 10 ? `0${a.getUTCMinutes()}` : a.getUTCMinutes();
-    var sec = a.getUTCSeconds() < 10 ? `0${a.getUTCSeconds()}` : a.getUTCSeconds();
-    var time = `${year}-${month}-${date} ${hour}:${min}:${sec}`;
-    return time;
-}
-
 
 const svgWidth = 960; //document.documentElement.clientWidth; // 960;
 const svgHeight = 600; //document.documentElement.clientWidth; //800;
@@ -96,25 +69,25 @@ function processData(responses) {
         const planeRed = legend.append("path")
             .attr("d", "m25.21488,3.93375c-0.44355,0 -0.84275,0.18332 -1.17933,0.51592c-0.33397,0.33267 -0.61055,0.80884 -0.84275,1.40377c-0.45922,1.18911 -0.74362,2.85964 -0.89755,4.86085c-0.15655,1.99729 -0.18263,4.32223 -0.11741,6.81118c-5.51835,2.26427 -16.7116,6.93857 -17.60916,7.98223c-1.19759,1.38937 -0.81143,2.98095 -0.32874,4.03902l18.39971,-3.74549c0.38616,4.88048 0.94192,9.7138 1.42461,13.50099c-1.80032,0.52703 -5.1609,1.56679 -5.85232,2.21255c-0.95496,0.88711 -0.95496,3.75718 -0.95496,3.75718l7.53,-0.61316c0.17743,1.23545 0.28701,1.95767 0.28701,1.95767l0.01304,0.06557l0.06002,0l0.13829,0l0.0574,0l0.01043,-0.06557c0,0 0.11218,-0.72222 0.28961,-1.95767l7.53164,0.61316c0,0 0,-2.87006 -0.95496,-3.75718c-0.69044,-0.64577 -4.05363,-1.68813 -5.85133,-2.21516c0.48009,-3.77545 1.03061,-8.58921 1.42198,-13.45404l18.18207,3.70115c0.48009,-1.05806 0.86881,-2.64965 -0.32617,-4.03902c-0.88969,-1.03062 -11.81147,-5.60054 -17.39409,-7.89352c0.06524,-2.52287 0.04175,-4.88024 -0.1148,-6.89989l0,-0.00476c-0.15655,-1.99844 -0.44094,-3.6683 -0.90277,-4.8561c-0.22699,-0.59493 -0.50356,-1.07111 -0.83754,-1.40377c-0.33658,-0.3326 -0.73578,-0.51592 -1.18194,-0.51592l0,0l-0.00001,0l0,0z")
             .attr("fill", "red")
-            .attr('transform', `translate(${legendWidth/6}, ${legendHeight/6}) scale(1.5) rotate(90)`)
+            .attr('transform', `translate(${legendWidth / 6}, ${legendHeight / 6}) scale(1.5) rotate(90)`)
 
         legend.append('text')
             .text('Outbound')
             .attr('fill', 'red')
-            .attr("x", `${legendWidth/10 - 70}`)
-            .attr("y", `${legendHeight/5}`)
+            .attr("x", `${legendWidth / 10 - 70}`)
+            .attr("y", `${legendHeight / 5}`)
             .attr('transform', 'scale(3)')
 
         const planeBlue = legend.append("path")
             .attr("d", "m25.21488,3.93375c-0.44355,0 -0.84275,0.18332 -1.17933,0.51592c-0.33397,0.33267 -0.61055,0.80884 -0.84275,1.40377c-0.45922,1.18911 -0.74362,2.85964 -0.89755,4.86085c-0.15655,1.99729 -0.18263,4.32223 -0.11741,6.81118c-5.51835,2.26427 -16.7116,6.93857 -17.60916,7.98223c-1.19759,1.38937 -0.81143,2.98095 -0.32874,4.03902l18.39971,-3.74549c0.38616,4.88048 0.94192,9.7138 1.42461,13.50099c-1.80032,0.52703 -5.1609,1.56679 -5.85232,2.21255c-0.95496,0.88711 -0.95496,3.75718 -0.95496,3.75718l7.53,-0.61316c0.17743,1.23545 0.28701,1.95767 0.28701,1.95767l0.01304,0.06557l0.06002,0l0.13829,0l0.0574,0l0.01043,-0.06557c0,0 0.11218,-0.72222 0.28961,-1.95767l7.53164,0.61316c0,0 0,-2.87006 -0.95496,-3.75718c-0.69044,-0.64577 -4.05363,-1.68813 -5.85133,-2.21516c0.48009,-3.77545 1.03061,-8.58921 1.42198,-13.45404l18.18207,3.70115c0.48009,-1.05806 0.86881,-2.64965 -0.32617,-4.03902c-0.88969,-1.03062 -11.81147,-5.60054 -17.39409,-7.89352c0.06524,-2.52287 0.04175,-4.88024 -0.1148,-6.89989l0,-0.00476c-0.15655,-1.99844 -0.44094,-3.6683 -0.90277,-4.8561c-0.22699,-0.59493 -0.50356,-1.07111 -0.83754,-1.40377c-0.33658,-0.3326 -0.73578,-0.51592 -1.18194,-0.51592l0,0l-0.00001,0l0,0z")
             .attr("fill", "blue")
-            .attr('transform', `translate(${legendWidth/2}, ${legendHeight/6}) scale(1.5) rotate(90)`)
+            .attr('transform', `translate(${legendWidth / 2}, ${legendHeight / 6}) scale(1.5) rotate(90)`)
 
         legend.append('text')
             .text('Inbound')
             .attr('fill', 'blue')
-            .attr("x", `${legendWidth/10 + 120}`)
-            .attr("y", `${legendHeight/5}`)
+            .attr("x", `${legendWidth / 10 + 120}`)
+            .attr("y", `${legendHeight / 5}`)
             .attr('transform', 'scale(3)')
 
         if (this.id === "current-flights") {
@@ -425,7 +398,7 @@ function drawFlights(flightSummary, airportCode) {
 
     function transition(plane, route, flightCount) {
         const l = route.node().getTotalLength();
-        // console.log(route.node())
+
         plane.transition()
             .duration(l * 50)
             .attrTween("transform", delta(route.node(), flightCount))
@@ -480,19 +453,11 @@ function drawFlights(flightSummary, airportCode) {
 
 function drawScheduledPaths(airportCode) {
 
-    Promise.all([d3.json(`http://127.0.0.1:5000/get-today-flights/${airportCode}`),
-            d3.json('/get-flighttracker')
-        ])
-        .then(responses => {
-
-            const schedules = responses[0];
-            const tracker = responses[1];
-            const trackerCombined = combineScheduleAndTracker(schedules, tracker);
-
+    d3.json(`/summary-current-flights/${airportCode}`)
+        .then(schedules => {
+            const trackerCombined = combineScheduleAndTracker(schedules);
             drawCurrentFlights(trackerCombined, airportCode);
-
         });
-
 }
 
 
@@ -513,7 +478,6 @@ function drawCurrentFlights(trackerCombined, airportCode) {
 
     const path = d3.geoPath(projection);
 
-    // console.log(trackerCombined);
 
     function fly(flightObj) {
 
@@ -549,14 +513,12 @@ function drawCurrentFlights(trackerCombined, airportCode) {
         const long = fullArc.node().getTotalLength();
         const short = currentArc.node().getTotalLength();
 
-        // console.log(flightObj);
-
         plane.transition()
             .duration(long * 50)
             .attrTween("transform", delta(fullArc.node(), currentArc.node()))
             .on("end", () => { // plane will head to its reported direction
-                return plane.transition()
-                    .duration(2000)
+                return plane //.transition()
+                    // .duration(2000)
                     .attr("transform", `translate(${currentArc.node().getPointAtLength(short).x},
                                                   ${currentArc.node().getPointAtLength(short).y})
                                         scale(0.39) 
@@ -626,81 +588,27 @@ function drawCurrentFlights(trackerCombined, airportCode) {
             "boundType": boundType
         }
 
-        // const status = trackerCombined.status; // or trackerCombined.currentStatus -> ex.) "en-route"
-
         fly(flightObj);
 
     });
 
-
-    // let i = 0;
-    // window.refreshIntervalId = setInterval(function() {
-    //     if (i > summary.length - 1) {
-    //         i = 0;
-    //     }
-    //     var pair = summary[i];
-
-    //     // fly(summary);
-    //     fly(pair.departure_coords, pair.arrival_coords, pair.flights);
-
-    //     i++;
-    // }, 150);
-
 }
 
-function combineScheduleAndTracker(timeTable, tracker) {
+function combineScheduleAndTracker(timeTable) {
 
     timeTable.forEach(item => {
-        // item.departure.delay = item.departure.delay !== null ? parseInt(item.departure.delay) : null;
-        // item.arrival.delay = item.arrival.delay !== null ? parseInt(item.arrival.delay) : null;
-        item['departSchTimeUTC'] = moment.tz(item.departure_schedule_time, item.departure_timezone).utc().format();
-        item['arrivalSchTimeUTC'] = moment.tz(item.arrival_schedule_time, item.arrival_timezone).utc().format();
-        item['duration'] = ((moment.tz(item.arrival_schedule_time, item.arrival_timezone).utc().valueOf() -
-                moment.tz(item.departure_schedule_time, item.departure_timezone).utc().valueOf()) / 1000) / 60 / 60 // unit: hours
 
         let source = new LatLon(item.departure_coords[1], item.departure_coords[0]);
         let target = new LatLon(item.arrival_coords[1], item.arrival_coords[0]);
 
         item.distance = source.distanceTo(target, 3959); // unit: miles
         item.midPoint = source.midpointTo(target).toGeoJSON(); // Lon Lat
-    });
-
-
-    const combined = [];
-
-
-    // Merge with Flight tracker dataset to extract currenct positon, speed, and direction
-    tracker.forEach(flight => {
-        timeTable.forEach(item => {
-
-            const tracker_update = timeConverterToUTC(Number(flight.system.updated));
-            const updated_date = tracker_update.slice(0, 10);
-
-            if ((item.departure === flight.departure.iataCode) &&
-                (item.arrival === flight.arrival.iataCode) &&
-                (item.flight_icaoNumber === flight.flight.icaoNumber) &&
-                (item.departSchTimeUTC.slice(0, 10) === updated_date)) {
-
-                const tempObj = {
-                    'currentLat': flight.geography.latitude,
-                    'currentLon': flight.geography.longitude,
-                    'currentAlt': flight.geography.altitude,
-                    'currentDirection': flight.geography.direction,
-                    'currentSpeedH': flight.speed.horizontal,
-                    'currentSpeedV': flight.speed.vertical,
-                    'currentStatus': flight.status,
-                    'currentUpdateAt': tracker_update // Unix timestamp is based on UTC (== 'GMT -0'), but it is converted to be based on local time
-                }
-
-                const concatenated = Object.assign(item, tempObj);
-                combined.push(concatenated);
-            }
-        });
 
     });
 
-    return combined;
+    return timeTable;
 }
+
 
 function estimates(obj) {
 
@@ -719,8 +627,6 @@ function estimates(obj) {
 function drawMap(map) {
     // remove non-continental states
     map.objects.states.geometries = map.objects.states.geometries.filter(isContinental);
-
-    // console.log(map);
 
     // run topojson on remaining states and adjust projection
     let land = topojson.merge(map, map.objects.states.geometries);
@@ -754,27 +660,27 @@ function isContinental(state) {
 }
 
 
-function updateTooptips(arcGroup) {
+// function updateTooptips(arcGroup) {
 
-    const toolTip = d3.tip()
-        // .attr('class', 'd3-tip')
-        .offset([180, -100])
-        .html(function(d) {
-            return (`<h5>From: ${d.routes[0]}</h5><br>
-            <h5>To: ${d.routes[1]}</h5>`);
-        });
+//     const toolTip = d3.tip()
+//         // .attr('class', 'd3-tip')
+//         .offset([180, -100])
+//         .html(function(d) {
+//             return (`<h5>From: ${d.routes[0]}</h5><br>
+//             <h5>To: ${d.routes[1]}</h5>`);
+//         });
 
-    arcGroup.call(toolTip);
+//     arcGroup.call(toolTip);
 
-    arcGroup.on('mouseover', function(data) {
-            toolTip.show(data, this);
-        })
-        .on('mouseout', function(data) {
-            toolTip.hide(data, this);
-        });
+//     arcGroup.on('mouseover', function(data) {
+//             toolTip.show(data, this);
+//         })
+//         .on('mouseout', function(data) {
+//             toolTip.hide(data, this);
+//         });
 
-    return arcGroup;
-}
+//     return arcGroup;
+// }
 
 
 function dropDownMenuOrganizer(jsonData, feature, selector) {
@@ -796,4 +702,32 @@ function dropDownMenuOrganizer(jsonData, feature, selector) {
             dropDownAirports.options[dropDownAirports.options.length] = new Option(option, index);
         }
     });
+}
+
+
+function timeConverterToLocale(UNIX_timestamp) {
+    // ISO 8601 format
+    var a = new Date(UNIX_timestamp * 1000);
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var year = a.getFullYear();
+    var month = (a.getMonth() + 1) < 10 ? `0${(a.getMonth() + 1)}` : (a.getMonth() + 1); //months[a.getMonth()];
+    var date = a.getDate();
+    var hour = a.getHours() < 10 ? `0${a.getHours()}` : a.getHours();
+    var min = a.getMinutes() < 10 ? `0${a.getMinutes()}` : a.getMinutes();
+    var sec = a.getSeconds() < 10 ? `0${a.getSeconds()}` : a.getSeconds();
+    var time = `${year}-${month}-${date} ${hour}:${min}:${sec}`;
+    return time;
+}
+
+function timeConverterToUTC(UNIX_timestamp) {
+    var a = new Date(UNIX_timestamp * 1000);
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var year = a.getUTCFullYear();
+    var month = (a.getUTCMonth() + 1) < 10 ? `0${(a.getUTCMonth() + 1)}` : (a.getUTCMonth() + 1); //months[a.getUTCMonth()];
+    var date = a.getUTCDate() < 10 ? `0${a.getUTCDate()}` : a.getUTCDate();
+    var hour = a.getUTCHours() < 10 ? `0${a.getUTCHours()}` : a.getUTCHours();
+    var min = a.getUTCMinutes() < 10 ? `0${a.getUTCMinutes()}` : a.getUTCMinutes();
+    var sec = a.getUTCSeconds() < 10 ? `0${a.getUTCSeconds()}` : a.getUTCSeconds();
+    var time = `${year}-${month}-${date} ${hour}:${min}:${sec}`;
+    return time;
 }

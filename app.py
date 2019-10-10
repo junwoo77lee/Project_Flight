@@ -1,23 +1,31 @@
-from flask import Flask, current_app, render_template, redirect #, jsonify
-import ujson as json
-# from json import dumps
+from flask import Flask, current_app, render_template, redirect  # , jsonify
 from flask_pymongo import PyMongo
 import pymongo
-import pandas as pd
 import requests
+
+import ujson as json
+import pandas as pd
+
 import os
 import re
-from datetime import datetime
+
+import pytz
+from datetime import datetime, timezone
+import calendar
 from collections import defaultdict
+
 api_key = os.environ.get('FLIGHT_API_KEY', '')
 
 # Create an instance of Flask
 app = Flask(__name__)
 
 # Replace Flask-original jasonify for performance boost
+
+
 def jsonify(*args, **kwargs):
     if args and kwargs:
-        raise TypeError('jsonify() behavior undefined when passed both args and kwargs')
+        raise TypeError(
+            'jsonify() behavior undefined when passed both args and kwargs')
     elif len(args) == 1:  # single args are passed directly to dumps()
         data = args[0]
     else:
@@ -27,6 +35,7 @@ def jsonify(*args, **kwargs):
         json.dumps(data) + '\n',
         mimetype=current_app.config['JSONIFY_MIMETYPE']
     )
+
 
 # Use PyMongo to establish Mongo connection
 mongo = PyMongo(app, uri="mongodb://localhost:27017/flight_app")
@@ -40,13 +49,14 @@ major_airports = {'ABQ', 'ANC', 'ATL', 'AUS', 'BDL', 'BHM', 'BNA', 'BOS', 'BUF',
 def home():
     return render_template("index.html")
 
+
 @app.route("/airport_coords")
 def get_airport_coords():
     # pulling out a reference dictionary from the DB instead of using outside API
     # to look up useful information faster
     # It has 5 keys: "airport_name", "airport_coords", "airport_city",
     # "airport_timezone", "city_names"
-    cursor = mongo.db.references.find({}, { "_id" : 0 })
+    cursor = mongo.db.references.find({}, {"_id": 0})
     for d in cursor:
         reference_dict = d
 
@@ -69,9 +79,9 @@ def summary_multivariate(airport):
     # to look up useful information faster
     # It has 5 keys: "airport_name", "airport_coords", "airport_city",
     # "airport_timezone", "city_names"
-    cursor = mongo.db.references.find({}, { "_id" : 0 })
+    cursor = mongo.db.references.find({}, {"_id": 0})
     for d in cursor:
-        reference_dict = d 
+        reference_dict = d
 
     results = []
     for flight in result_json:
@@ -87,14 +97,14 @@ def summary_multivariate(airport):
         arrival_coords = reference_dict['airport_coords'][arrival_airport]
 
         results.append({
-            "origin" : departure_airport,
-            "origin_coords" : departure_coords,
-            "origin_date" : departure_time,
-            "origin_timezone" : departure_timezone,
-            "destination" : arrival_airport,
-            "destination_coords" : arrival_coords,
-            "destination_date" : arrival_time,
-            "destination_timezone" : arrival_timezone
+            "origin": departure_airport,
+            "origin_coords": departure_coords,
+            "origin_date": departure_time,
+            "origin_timezone": departure_timezone,
+            "destination": arrival_airport,
+            "destination_coords": arrival_coords,
+            "destination_date": arrival_time,
+            "destination_timezone": arrival_timezone
         })
 
     return jsonify(results)
@@ -265,9 +275,9 @@ def store_data():
     # to look up useful information faster
     # It has 5 keys: "airport_name", "airport_coords", "airport_city",
     # "airport_timezone", "city_names"
-    cursor = mongo.db.references.find({}, { "_id" : 0 })
+    cursor = mongo.db.references.find({}, {"_id": 0})
     for d in cursor:
-        reference_dict = d 
+        reference_dict = d
 
     for schedule in timetable_json:
 
@@ -333,7 +343,6 @@ def store_data():
     return f"Posting Done. (insert: {count_insert} / update: {count_update} records)"
 
 
-
 # Trim the stored data to easily visualize the arcs between source and target airports
 @app.route("/summarize-timetable-slim")
 def summarize_timetable_slim():
@@ -353,10 +362,10 @@ def summarize_timetable_slim():
     # to look up useful information faster
     # It has 5 keys: "airport_name", "airport_coords", "airport_city",
     # "airport_timezone", "city_names"
-    cursor = mongo.db.references.find({}, { "_id" : 0 })
+    cursor = mongo.db.references.find({}, {"_id": 0})
     for d in cursor:
         reference_dict = d
-    
+
     results = []
     for route, flight_counts in counts.items():
         departure = route.split('-')[0]
@@ -397,7 +406,7 @@ def summarize_timetable():
     # to look up useful information faster
     # It has 5 keys: "airport_name", "airport_coords", "airport_city",
     # "airport_timezone", "city_names"
-    cursor = mongo.db.references.find({}, { "_id" : 0 })
+    cursor = mongo.db.references.find({}, {"_id": 0})
     for d in cursor:
         reference_dict = d
 
@@ -422,10 +431,10 @@ def summarize_timetable():
 
     return jsonify(results)
 
-
+# Just use only onetime for your lifetime
 @app.route("/post-references")
 def post_references():
-    # Creating a reference collection instead of using outside APIs 
+    # Creating a reference collection instead of using outside APIs
     # to look up useful information faster
     # It has 5 keys: "airport_name", "airport_coords", "airport_city",
     # "airport_timezone", "city_names"
@@ -460,7 +469,6 @@ def post_references():
             # Airport citycode
             airport_cities[airport_code] = airport.get('codeIataCity')
 
-
     # CITY reference
     city_url = "http://aviation-edge.com/v2/public/cityDatabase"
     ct_params = {"key": api_key}
@@ -492,13 +500,12 @@ def post_references():
                     city_state = f"{city_name} / {city_state_dict['State'].get(city_name.lower())}"
                     city_names[airport_code] = city_state
 
+    reference_dict = {"airport_names": airport_names,
+                      "airport_coords": airport_coords,
+                      "airport_cities": airport_cities,
+                      "airport_timezones": airport_timezone,
+                      "city_names": city_names}
 
-    reference_dict = {"airport_names" : airport_names,
-                      "airport_coords" : airport_coords,    
-                      "airport_cities" : airport_cities,
-                      "airport_timezones" : airport_timezone,
-                      "city_names" : city_names}
-    
     # insert to the Mongo database
     myclient = pymongo.MongoClient("mongodb://localhost:27017/")
     mydb = myclient["flight_app"]
@@ -533,9 +540,9 @@ def post_flight_tracker():
     count_insert = 0
     count_update = 0
     for data in result_json:
-        # get information related to major us airports only described in "major_airports" variable 
+        # get information related to major us airports only described in "major_airports" variable
         if ((data.get('arrival').get('iataCode') in major_airports) and
-            (data.get('departure').get('iataCode') in major_airports)):
+                (data.get('departure').get('iataCode') in major_airports)):
 
             try:
                 # assuming that only no codeshared flight is a real one.
@@ -547,18 +554,18 @@ def post_flight_tracker():
             except:  # if the duplicate found
 
                 cursor = mycol.find({"aircraft": data.get("aircraft"),
-                                    "airline": data.get("airline"),
-                                    "arrival": data.get("arrival"),
-                                    "departure": data.get("departure"),
-                                    "flight": data.get("flight")},
+                                     "airline": data.get("airline"),
+                                     "arrival": data.get("arrival"),
+                                     "departure": data.get("departure"),
+                                     "flight": data.get("flight")},
                                     {"_id": 1})
                 update_set = {"$set": {
-                                "geography": data.get("geography"),
-                                "speed": data.get("speed"),
-                                "status": data.get("status"),
-                                "system": data.get("system")
-                                }
-                        }
+                    "geography": data.get("geography"),
+                    "speed": data.get("speed"),
+                    "status": data.get("status"),
+                    "system": data.get("system")
+                }
+                }
 
                 for update in cursor:
                     data_update = mycol.update_one(update, update_set)
@@ -573,10 +580,127 @@ def post_flight_tracker():
 def get_flight_tracker():
 
     results = []
-    flights = mongo.db.flighttracker.find({}, {"_id": 0, "aircraft" : 0, "airline" : 0})
+    flights = mongo.db.flighttracker.find(
+        {}, {"_id": 0, "aircraft": 0, "airline": 0})
 
     for flight in flights:
         results.append(flight)
+
+    return jsonify(results)
+
+
+@app.route("/get-flighttracker/<airport>")
+def get_flight_tracker_by_airport(airport):
+
+    results = []
+    flights = mongo.db.flighttracker.find(
+        {"$or": [{"departure.iataCode": airport},
+                 {"arrival.iataCode": airport},
+                 ]}, {"_id": 0, "aircraft": 0, "airline": 0})
+
+    for flight in flights:
+        results.append(flight)
+
+    return jsonify(results)
+
+
+@app.route("/summary-current-flights/<airport>")
+def summary_current_flights(airport):
+
+    def calculate_utc_time(date, timezone):
+        local = pytz.timezone(timezone)
+        naive = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f")
+        local_dt = local.localize(naive, is_dst=True)  # True until Nov 3, 2019
+        utc_dt = local_dt.astimezone(pytz.utc)
+
+        return utc_dt  # .strftime("%Y-%m-%dT%H:%M:%S")
+
+    cursor_tracker = mongo.db.flighttracker.find({
+        "$or": [{"departure.iataCode": airport},
+                {"arrival.iataCode": airport}]
+    }, {"_id": 0, "aircraft": 0, "airline": 0})
+
+    tracker = [records for records in cursor_tracker]
+
+    today = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")[:10]
+    cursor_timetable = mongo.db.timetable.find(
+        {"$and": [{"departure.scheduledTime": {"$regex": f"{today}.*"}}],
+         "$or": [{"departure.iataCode": airport},
+                 {"arrival.iataCode": airport}]
+         }, {"_id": 0, "status": 1,
+             "departure.iataCode": 1,
+             "departure.delay": 1,
+             "departure.scheduledTime": 1,
+             "arrival.iataCode": 1,
+             "arrival.delay": 1,
+             "arrival.scheduledTime": 1,
+             "flight.icaoNumber": 1
+             })
+
+    timetable = [records for records in cursor_timetable]
+
+    # pulling out a reference dictionary from the DB instead of using outside API
+    # to look up useful information faster
+    # It has 5 keys: "airport_name", "airport_coords", "airport_city",
+    # "airport_timezone", "city_names"
+    cursor_ref = mongo.db.references.find({}, {"_id": 0})
+    for d in cursor_ref:
+        reference_dict = d
+
+    results = []
+    for actual_flight in tracker:
+        updated_timestamp = int(actual_flight.get('system').get('updated'))
+        updated_utc = datetime.fromtimestamp(
+            updated_timestamp, timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+
+        if (today == updated_utc[:10]):
+            flight = actual_flight.get('flight').get('icaoNumber')
+            departure = actual_flight.get('departure').get('iataCode')
+            arrival = actual_flight.get('arrival').get('iataCode')
+
+            for schedule in timetable:
+                scheduled_flight = schedule.get('flight').get('icaoNumber')
+                scheduled_departure = schedule.get('departure').get('iataCode')
+                scheduled_arrival = schedule.get('arrival').get('iataCode')
+
+                if all([flight == scheduled_flight, departure == scheduled_departure, arrival == scheduled_arrival]):
+
+                    # calculate duration based on their utc time
+                    departure_schedule_time = schedule.get(
+                        'departure').get('scheduledTime')
+                    arrival_schedule_time = schedule.get(
+                        'arrival').get('scheduledTime')
+                    departure_timezone = reference_dict['airport_timezones'][scheduled_departure]
+                    arrival_timezone = reference_dict['airport_timezones'][scheduled_arrival]
+                    departure_schedule_time_utc = calculate_utc_time(
+                        departure_schedule_time, departure_timezone)
+                    arrival_schedule_time_utc = calculate_utc_time(
+                        arrival_schedule_time, arrival_timezone)
+
+                    duration = (calendar.timegm(arrival_schedule_time_utc.timetuple()) -
+                                calendar.timegm(departure_schedule_time_utc.timetuple())) / 60 / 60  # to hours
+
+                    results.append({
+                        'flight_icaoNumber': schedule.get('flight').get('icaoNumber'),
+                        'status': schedule.get('status'),
+                        'departure': departure,
+                        'departure_coords': reference_dict['airport_coords'][departure],
+                        'departure_delay': schedule.get('departure').get('delay'),
+                        'departure_schedule_time': schedule.get('departure').get('scheduledTime'),
+                        'arrival': arrival,
+                        'arrival_coords': reference_dict['airport_coords'][arrival],
+                        'arrival_delay': schedule.get('arrival').get('delay'),
+                        'arrival_schedule_time': schedule.get('arrival').get('scheduledTime'),
+                        'duration': duration,
+                        'currentLat': actual_flight.get('geography').get('latitude'),
+                        'currentLon': actual_flight.get('geography').get('longitude'),
+                        'currentAlt': actual_flight.get('geography').get('altitude'),
+                        'currentDirection': actual_flight.get('geography').get('direction'),
+                        'currentSpeedH': actual_flight.get('speed').get('horizontal'),
+                        'currentSpeedV': actual_flight.get('speed').get('vertical'),
+                        'currentStatus': actual_flight.get('status'),
+                        'currentUpdatedAt': updated_utc
+                    })
 
     return jsonify(results)
 
@@ -644,6 +768,7 @@ def post_city():
 
     return "Posting Done."
 
+
 @app.route("/get-today-flights/<airport>")
 def get_today_flights(airport):
     # <airport> is either "total" or airport iata code (ex. "DEN")
@@ -654,40 +779,40 @@ def get_today_flights(airport):
     if (airport == "total"):
         # data = mongo.db.timetable.find({}, {"_id": 0})
         cursor = mongo.db.timetable.find(
-            {"departure.scheduledTime": { "$regex" : f"{today}.*" }},
-               {"_id": 0, "status" : 1,
-                "departure.iataCode" : 1,
-                "departure.delay" : 1,
-                "departure.scheduledTime" : 1,
-                "arrival.iataCode" : 1,
-                "arrival.delay" : 1,
-                "arrival.scheduledTime" : 1, 
-                "flight.icaoNumber" : 1
-                })
+            {"departure.scheduledTime": {"$regex": f"{today}.*"}},
+            {"_id": 0, "status": 1,
+                "departure.iataCode": 1,
+                "departure.delay": 1,
+                "departure.scheduledTime": 1,
+                "arrival.iataCode": 1,
+                "arrival.delay": 1,
+                "arrival.scheduledTime": 1,
+                "flight.icaoNumber": 1
+             })
 
         return jsonify(list(cursor))
 
     else:
         cursor_filtered = mongo.db.timetable.find(
-            {"$and": [{"departure.scheduledTime": { "$regex" : f"{today}.*" }}],
+            {"$and": [{"departure.scheduledTime": {"$regex": f"{today}.*"}}],
              "$or": [{"departure.iataCode": airport},
                      {"arrival.iataCode": airport},
-                    ]
-            }, {"_id": 0, "status" : 1,
-                "departure.iataCode" : 1,
-                "departure.delay" : 1,
-                "departure.scheduledTime" : 1,
-                "arrival.iataCode" : 1,
-                "arrival.delay" : 1,
-                "arrival.scheduledTime" : 1, 
-                "flight.icaoNumber" : 1
-                })
+                     ]
+             }, {"_id": 0, "status": 1,
+                 "departure.iataCode": 1,
+                 "departure.delay": 1,
+                 "departure.scheduledTime": 1,
+                 "arrival.iataCode": 1,
+                 "arrival.delay": 1,
+                 "arrival.scheduledTime": 1,
+                 "flight.icaoNumber": 1
+                 })
 
         # pulling out a reference dictionary from the DB instead of using outside API
         # to look up useful information faster
         # It has 5 keys: "airport_name", "airport_coords", "airport_city",
         # "airport_timezone", "city_names"
-        cursor_ref = mongo.db.references.find({}, { "_id" : 0 })
+        cursor_ref = mongo.db.references.find({}, {"_id": 0})
         for d in cursor_ref:
             reference_dict = d
 
@@ -697,18 +822,18 @@ def get_today_flights(airport):
             arrival = schedule.get('arrival').get('iataCode')
 
             results.append({
-                'status' : schedule.get('status'),
+                'status': schedule.get('status'),
                 'departure': departure,
                 'departure_coords': reference_dict['airport_coords'][departure],
-                'departure_delay' : schedule.get('departure').get('delay'),
-                'departure_schedule_time' : schedule.get('departure').get('scheduledTime'),
-                'departure_timezone' : reference_dict['airport_timezones'][departure],
+                'departure_delay': schedule.get('departure').get('delay'),
+                'departure_schedule_time': schedule.get('departure').get('scheduledTime'),
+                'departure_timezone': reference_dict['airport_timezones'][departure],
                 'arrival': arrival,
                 'arrival_coords': reference_dict['airport_coords'][arrival],
-                'arrival_delay' : schedule.get('arrival').get('delay'),
-                'arrival_schedule_time' : schedule.get('arrival').get('scheduledTime'),
-                'arrival_timezone' : reference_dict['airport_timezones'][arrival],
-                'flight_icaoNumber' : schedule.get('flight').get('icaoNumber')
+                'arrival_delay': schedule.get('arrival').get('delay'),
+                'arrival_schedule_time': schedule.get('arrival').get('scheduledTime'),
+                'arrival_timezone': reference_dict['airport_timezones'][arrival],
+                'flight_icaoNumber': schedule.get('flight').get('icaoNumber')
             })
 
         return jsonify(results)
@@ -723,15 +848,15 @@ def get_storeddata(airport):
     if (airport == "total"):
         # data = mongo.db.timetable.find({}, {"_id": 0})
         cursor = mongo.db.timetable.find(
-            {}, {"_id": 0, "status" : 1,
-                "departure.iataCode" : 1,
-                "departure.delay" : 1,
-                "departure.scheduledTime" : 1,
-                "arrival.iataCode" : 1,
-                "arrival.delay" : 1,
-                "arrival.scheduledTime" : 1, 
-                "flight.icaoNumber" : 1
-                })
+            {}, {"_id": 0, "status": 1,
+                 "departure.iataCode": 1,
+                 "departure.delay": 1,
+                 "departure.scheduledTime": 1,
+                 "arrival.iataCode": 1,
+                 "arrival.delay": 1,
+                 "arrival.scheduledTime": 1,
+                 "flight.icaoNumber": 1
+                 })
 
         return jsonify(list(cursor))
 
@@ -739,18 +864,19 @@ def get_storeddata(airport):
         cursor_filtered = mongo.db.timetable.find(
             {"$or": [{"departure.iataCode": airport},
                      {"arrival.iataCode": airport}
-                    ]
-            }, {"_id": 0, "status" : 1,
-                "departure.iataCode" : 1,
-                "departure.delay" : 1,
-                "departure.scheduledTime" : 1,
-                "arrival.iataCode" : 1,
-                "arrival.delay" : 1,
-                "arrival.scheduledTime" : 1, 
-                "flight.icaoNumber" : 1
-                })
+                     ]
+             }, {"_id": 0, "status": 1,
+                 "departure.iataCode": 1,
+                 "departure.delay": 1,
+                 "departure.scheduledTime": 1,
+                 "arrival.iataCode": 1,
+                 "arrival.delay": 1,
+                 "arrival.scheduledTime": 1,
+                 "flight.icaoNumber": 1
+                 })
 
         return jsonify(list(cursor_filtered))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
