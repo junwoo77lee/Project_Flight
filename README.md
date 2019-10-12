@@ -1,4 +1,4 @@
-# Project_Flight
+# Project-Flight
 * DU Bootcamp Project 2 - Members: Brett Kolinek, Kiet Tung, Mohamed Awouda, Junwoo (David) Lee
 
 * Technologies used:
@@ -20,7 +20,12 @@
 * Visualizations:
   * d3 map based on topojson
   * Flight Animations (Inspired by and forked from <a href="http://www.tnoda.com/blog/2014-04-02/">this source</a>)
-  * Crossfilter Chart (forked from <a href="http://crossfilter.github.io/crossfilter/">this source</a>)
-  * Hierarchical Bar Chart (forked from <a href="https://observablehq.com/@d3/hierarchical-bar-chart">this source</a>)
-    
+  * Crossfilter Chart (Inspired by and forked from <a href="http://crossfilter.github.io/crossfilter/">this source</a>)
+  * Hierarchical Bar Chart (Inspired by and forked from <a href="https://observablehq.com/@d3/hierarchical-bar-chart">this source</a>)
+
+* Data Source:
+  * <a href="https://aviation-edge.com/">Aviation Edge APIs</a>
+<hr>
+
+* Screenshot for Demo
 <img src="https://github.com/junwoo77lee/Project_Flight/blob/master/project_flight_demo_img.png" alt="flight_aviation">
