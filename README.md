@@ -21,6 +21,6 @@
   * d3 map based on topojson
   * Flight Animations (Inspired by and forked from <a href="http://www.tnoda.com/blog/2014-04-02/">this source</a>)
   * Crossfilter Chart (forked from <a href="http://crossfilter.github.io/crossfilter/">this source</a>)
-  * Hierarchical Bar Chart (forked from <a href="https://observablehq.com/@d3/hierarchical-bar-chart">this source</a>
+  * Hierarchical Bar Chart (forked from <a href="https://observablehq.com/@d3/hierarchical-bar-chart">this source</a>)
     
 <img src="https://github.com/junwoo77lee/Project_Flight/blob/master/project_flight_demo_img.png" alt="flight_aviation">
