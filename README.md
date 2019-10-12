@@ -16,3 +16,5 @@
     * requests
   * DB
     * MongoDB
+    
+<img src="https://github.com/junwoo77lee/Project_Flight/blob/master/project_flight_img1.png" alt="flight_aviation">
