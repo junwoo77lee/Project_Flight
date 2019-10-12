@@ -5,7 +5,7 @@
   * Javascript:
     * d3.js (v.3 and v.5)
     * moment.js / moment-timezone.js
-    * crossfilter.js
+    * crossfilter.js (forked from <a href="http://crossfilter.github.io/crossfilter/">this original source</a>)
     * geodesy.js
     * loadme.css for loader
   * Python
