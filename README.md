@@ -18,3 +18,4 @@
     * MongoDB
     
 <img src="https://github.com/junwoo77lee/Project_Flight/blob/master/project_flight_img1.png" alt="flight_aviation">
+<img src="https://github.com/junwoo77lee/Project_Flight/blob/master/project_flight_img2.png" alt="flight_aviation2">
