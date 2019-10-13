@@ -6,6 +6,7 @@ const height = document.documentElement.clientHeight;
 // Various formatters.
 // call the function with an sample argument "DEN". We need to change this a variable containing airport code.
 export default function multivariateChart(airport, boundType) {
+
     // boundType is either "arrival" or "departure"
 
     // Before d3.json fetching data, the loader run
@@ -22,27 +23,24 @@ export default function multivariateChart(airport, boundType) {
         const dateTime = mergeData(response);
 
         const flights = make_rawdata(dateTime, airport, boundType);
-        // A little coercion, since the CSV is untyped.
+
         flights.forEach(function(d, i) {
-            // console.log(d);
             d.index = i;
             d.date = parseDate(d.date);
             d.duration = parseFloat(d.duration);
             d.distance = parseFloat(d.distance);
         });
 
-        function make_rawdata(obj, airport, type) {
+        function make_rawdata(obj, airport, boundType) {
             const results = []
             let date;
             let converted_date;
 
-            if (type = "arrival") { // Inbound
-                obj.forEach(item => {
-                    if (item.destination === airport) {
-                        date = item.destination_date
-                    } else { // === departure
-                        date = item.origin_date
-                    }
+            if (boundType === "arrival") { // Inbound
+                obj.filter(item => {
+                    return item.destination === airport;
+                }).forEach(item => {
+                    date = item.destination_date;
                     converted_date = `${date.slice(5, 7)}${date.slice(8, 10)}${date.slice(11, 13)}${date.slice(14, 16)}`;
                     results.push({
                         "date": converted_date,
@@ -52,13 +50,12 @@ export default function multivariateChart(airport, boundType) {
                         "destination": item.destination
                     });
                 });
+
             } else { // departure (Outbound)
-                obj.forEach(item => {
-                    if (item.origin === airport) {
-                        date = item.origin_date
-                    } else { // === departure
-                        date = item.destination_date
-                    }
+                obj.filter(item => {
+                    return item.origin === airport;
+                }).forEach(item => {
+                    date = item.origin_date;
                     converted_date = `${date.slice(5, 7)}${date.slice(8, 10)}${date.slice(11, 13)}${date.slice(14, 16)}`;
                     results.push({
                         "date": converted_date,
@@ -68,6 +65,7 @@ export default function multivariateChart(airport, boundType) {
                         "destination": item.destination
                     });
                 });
+
             }
 
             return results;
@@ -96,10 +94,7 @@ export default function multivariateChart(airport, boundType) {
         var nestByDate = d3v3.nest()
             .key(function(d) { return d3v3.time.day(d.date); });
 
-
-
         // Create the crossfilter for the relevant dimensions and groups.
-
 
         var charts = [
 
@@ -131,8 +126,7 @@ export default function multivariateChart(airport, boundType) {
             .x(d3v3.time.scale()
                 .domain([new Date(2019, 8, 1), new Date(2019, 11, 1)])
                 .rangeRound([0, 10 * 90]))
-            .filter([new Date(2019, 9, 1), new Date(2019, 10, 1)])
-
+            // .filter([new Date(2019, 9, 1), new Date(2019, 10, 1)])
         ];
 
         // Given our array of charts, which we assume are in the same order as the
@@ -239,6 +233,7 @@ export default function multivariateChart(airport, boundType) {
                 y = d3v3.scale.linear().range([100, 0]),
                 id = barChart.id++,
                 axis = d3v3.svg.axis().orient("bottom"),
+                yaxis = d3v3.svg.axis().orient("right").ticks(5),
                 brush = d3v3.svg.brush(),
                 brushDirty,
                 dimension,
@@ -249,7 +244,9 @@ export default function multivariateChart(airport, boundType) {
                 var width = x.range()[1],
                     height = y.range()[0];
 
+                // y.domain([0, group.top(1)[0].value]);
                 y.domain([0, group.top(1)[0].value]);
+                yaxis.scale(y)
 
                 div.each(function() {
                     var div = d3v3.select(this),
@@ -286,13 +283,27 @@ export default function multivariateChart(airport, boundType) {
 
                         g.append("g")
                             .attr("class", "axis")
+                            .attr("id", "x-axis")
                             .attr("transform", "translate(0," + height + ")")
                             .call(axis);
+
+                        g.append("g")
+                            .attr("class", "axis")
+                            .attr("id", "y-axis")
+                            // .attr("transform", `translate(${margin.left}, 0)`)
+                            .call(yaxis);
 
                         // Initialize the brush component with pretty resize handles.
                         var gBrush = g.append("g").attr("class", "brush").call(brush);
                         gBrush.selectAll("rect").attr("height", height);
                         gBrush.selectAll(".resize").append("path").attr("d", resizePath);
+
+                    } else {
+                        g.select("#x-axis")
+                            .call(axis)
+
+                        g.select("#y-axis")
+                            .call(yaxis)
                     }
 
                     // Only redraw the brush if set externally.
@@ -386,6 +397,7 @@ export default function multivariateChart(airport, boundType) {
 
             chart.y = function(_) {
                 if (!arguments.length) return y;
+                yaxis.scale(y);
                 y = _;
                 return chart;
             };
@@ -428,8 +440,6 @@ export default function multivariateChart(airport, boundType) {
 
     function mergeData(timeTable) {
         timeTable.forEach(item => {
-            // item.departure.duration = item.departure.duration !== null ? parseInt(item.departure.duration) : null;
-            // item.arrival.duration = item.arrival.duration !== null ? parseInt(item.arrival.duration) : null;
             item['departSchTimeUTC'] = moment.tz(item.origin_date, item.origin_timezone).utc().format();
             item['arrivalSchTimeUTC'] = moment.tz(item.destination_date, item.destination_timezone).utc().format();
             item['duration'] = ((moment.tz(item.destination_date, item.destination_timezone).utc().valueOf() -
