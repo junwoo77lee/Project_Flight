@@ -33,7 +33,8 @@ const projection = d3.geoAlbers()
 
 // initial printing the bound type for crossfilter chart
 let boundType = d3.select('input[name="bound-type"]:checked').node().id; // (global variable) listener for bound type (ex. arrival) to be an argument for crossfilter chart
-d3.select("#bound-type-marker").text(boundType);
+const boundTypeMarker = d3.select('#bound-type-marker')
+boundTypeMarker.text(boundType);
 
 const urls = {
     flightSummary: '/summarize-timetable-slim', // to have a slim version of dataset which contains only departure airport, arrival airport and each flight counts between two locations.
@@ -101,8 +102,9 @@ function processData(responses) {
 
     boundTypeButton.on("change", function() {
         boundType = this.id;
-        d3.select("#bound-type-marker").text(this.id);
+        boundTypeMarker.text(boundType);
     });
+
     // Organize selections on drop-down menus
     dropDownMenuOrganizer(flightSummary, "arrival_name", "airportSelector");
 
@@ -163,7 +165,7 @@ function processData(responses) {
             // display the airport information
             createAirportTable(airportCode);
             // crossfilter chart
-            // multivariateChart(airportCode, boundType);
+            multivariateChart(airportCode, boundType);
 
             d3.select(this)
                 .attr('fill', 'red')
@@ -216,10 +218,30 @@ function createAirportTable(code) {
 
 function drawAirports(airportCoords, flightSummary) {
 
-    const airports = groups.airports;
+    let airports = groups.airports;
 
     let isClicked = false;
     let clickedId;
+
+    const toolTip = d3.tip()
+        .attr('class', 'd3-tip')
+        .direction('e')
+        .offset([0, 5])
+        .html(function(d) {
+            // return (`<h5>Name: ${d.airport_name} (${d.airport_iatacode})</h5>
+            //          <h5>City: ${d.airport_city}</h5>
+            //          <h5>State: ${d.airport_state}</h5>`);
+            return (`<table style="margin-top: 2.5px;">
+            <tr><td>Name: </td><td style="text-align: left">${d.airport_name} (${d.airport_iatacode})</td></tr>
+            <tr><td>City: </td><td style="text-align: left">${d.airport_city}</td></tr>
+            <tr><td>State: </td><td style="text-align: left">${d.airport_state}</td></tr>
+        </table>`);
+        });
+
+
+
+
+    airports.call(toolTip);
 
     airports.selectAll('circle .airport')
         .data(airportCoords)
@@ -231,7 +253,10 @@ function drawAirports(airportCoords, flightSummary) {
         .attr('cy', d => projection(d.airport_coords)[1])
         .attr('r', 8)
         .attr('fill', 'white')
-        .on('mouseover', function() {
+        .on('mouseover', function(d, i, el) {
+
+            toolTip.show(d, el[i]);
+
             if (this.id === clickedId) {
                 isClicked = true;
             } else {
@@ -240,12 +265,12 @@ function drawAirports(airportCoords, flightSummary) {
                     .attr('fill', 'rgb(232, 231, 189)')
                     .attr('stroke-width', 3)
                     .attr('box-shadow', '5px rgba(0,0,0,0.2)');
-
-                //     .attr('fill', 'red') //d3.rgb(232, 231, 189))
-                //     // .attr('box-shadow', '5px rgba(0,0,0,0.2)')
             }
         })
-        .on('mouseout', function() {
+        .on('mouseout', function(d, i, el) {
+
+            toolTip.hide(d, el[i]);
+
             if (isClicked === false) {
                 d3.select(this)
                     .attr('fill', 'white')
@@ -658,29 +683,6 @@ function isContinental(state) {
     var id = parseInt(state.id);
     return id < 60 && id !== 2 && id !== 15;
 }
-
-
-// function updateTooptips(arcGroup) {
-
-//     const toolTip = d3.tip()
-//         // .attr('class', 'd3-tip')
-//         .offset([180, -100])
-//         .html(function(d) {
-//             return (`<h5>From: ${d.routes[0]}</h5><br>
-//             <h5>To: ${d.routes[1]}</h5>`);
-//         });
-
-//     arcGroup.call(toolTip);
-
-//     arcGroup.on('mouseover', function(data) {
-//             toolTip.show(data, this);
-//         })
-//         .on('mouseout', function(data) {
-//             toolTip.hide(data, this);
-//         });
-
-//     return arcGroup;
-// }
 
 
 function dropDownMenuOrganizer(jsonData, feature, selector) {

@@ -14,7 +14,7 @@ export default function multivariateChart(airport, boundType) {
         .attr('transform', `translate(${width} + 500, ${height}) + 500`)
         .style("visibility", "visible")
 
-    d3v3.json(`http://127.0.0.1:5000/summary-multivariate-chart/${airport}`, function(error, response) {
+    d3v3.json(`/summary-multivariate-chart/${airport}`, function(error, response) {
         if (error) throw error;
 
         d3.select("#loader")

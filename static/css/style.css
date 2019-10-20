@@ -13,6 +13,40 @@ body {
     font-weight: bold;
 }
 
+
+/* fork me, source: https://github.com/tholman/github-corners */
+
+.github-corner:hover .octo-arm {
+    animation: octocat-wave 560ms ease-in-out
+}
+
+@keyframes octocat-wave {
+    0%,
+    100% {
+        transform: rotate(0)
+    }
+    20%,
+    60% {
+        transform: rotate(-25deg)
+    }
+    40%,
+    80% {
+        transform: rotate(10deg)
+    }
+}
+
+@media (max-width:500px) {
+    .github-corner:hover .octo-arm {
+        animation: none
+    }
+    .github-corner .octo-arm {
+        animation: octocat-wave 560ms ease-in-out
+    }
+}
+
+
+/* project related */
+
 .land {
     fill: #dddddd;
 }
@@ -40,6 +74,15 @@ body {
     font-family: sans-serif;
     margin: 1em;
     font-size: 15px;
+}
+
+.d3-tip {
+    line-height: 1;
+    padding: 6px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    border-radius: 4px;
+    font-size: 12px;
 }
 
 
@@ -250,5 +293,5 @@ aside {
     /* left: 740px; */
     font-size: 15px;
     color: red;
-    width: 350px;
+    width: 400px;
 }

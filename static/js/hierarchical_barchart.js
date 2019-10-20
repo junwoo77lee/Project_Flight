@@ -35,7 +35,7 @@ function drawHierarchicalBarChart(airport) {
         .style("visibility", "visible")
 
     // load airport statistis dataset
-    d3.json(`http://127.0.0.1:5000/hierarchical-summary/${airport}`)
+    d3.json(`/hierarchical-summary/${airport}`)
         .then(response => {
 
             d3.select("#loader")
@@ -76,9 +76,6 @@ function drawHierarchicalBarChart(airport) {
             .call(yAxis);
 
         down(svg, root);
-
-        // return svg.node();
-
     }
 
 
