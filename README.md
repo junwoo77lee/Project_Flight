@@ -1,6 +1,7 @@
-# Project-Flight
+# Project-Flight 
 * DU Bootcamp Project 2 - Members: Brett Kolinek, Kiet Tung, Mohamed Awouda, Junwoo (David) Lee
 
+* Deployed at <a href="https://flightapp-junwoo77-lee.herokuapp.com" target="_blank">Here</a>
 * Technologies used:
   * Javascript:
     * d3.js (v3 and v5)
