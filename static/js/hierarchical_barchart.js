@@ -6,7 +6,7 @@ function drawHierarchicalBarChart(airport) {
     const barPadding = 5 / barStep;
     const duration = 750;
     const margin = ({ top: 30, right: 30, bottom: 0, left: 250 });
-    const width = document.documentElement.clientWidth;
+    const width = document.documentElement.clientWidth * 1.2;
     let height = 894;
 
     const x = d3.scaleLinear()
@@ -16,7 +16,7 @@ function drawHierarchicalBarChart(airport) {
 
     const xAxis = g => g
         .attr("class", "x-axis")
-        .style("font", "30px sans-serif")
+        .style("font", "20px sans-serif")
         .attr("transform", `translate(0,${margin.top})`)
         .call(d3.axisTop(x).ticks(width / (width * 0.08), "s"))
         .call(g => (g.selection ? g.selection() : g).select(".domain").remove());
@@ -57,7 +57,7 @@ function drawHierarchicalBarChart(airport) {
         height = max * barStep + margin.top + margin.bottom;
 
         const svg = d3.select("#hierarchical-barchart").append("svg")
-            .attr('viewBox', `0 0 ${width} ${height}`)
+            .attr('viewBox', `50 0 ${width} ${height}`)
             .attr('preserveAspectRatio', 'xMinYMin');
 
         svg.append("rect")
@@ -159,6 +159,7 @@ function drawHierarchicalBarChart(airport) {
 
         // Color the bars as parents; they will fade to children if appropriate.
         enter.selectAll("rect")
+            .attr('class', 'hier-bar')
             .attr("fill", color(true))
             .attr("fill-opacity", 1)
             .transition(transition2)
@@ -222,6 +223,7 @@ function drawHierarchicalBarChart(airport) {
         // Transition entering rects to the new x-scale.
         // When the entering parent rect is done, make it visible!
         enter.selectAll("rect")
+            .attr('class', 'hier-bar')
             .attr("fill", d => color(!!d.children))
             .attr("fill-opacity", p => p === d ? 0 : null)
             .transition(transition2)

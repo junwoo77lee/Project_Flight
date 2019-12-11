@@ -3,8 +3,7 @@ import LatLon from "https://cdn.jsdelivr.net/npm/geodesy@2.2.0/latlon-spherical.
 
 const width = document.documentElement.clientWidth;
 const height = document.documentElement.clientHeight;
-// Various formatters.
-// call the function with an sample argument "DEN". We need to change this a variable containing airport code.
+
 export default function multivariateChart(airport, boundType) {
 
     // boundType is either "arrival" or "departure"
@@ -14,6 +13,7 @@ export default function multivariateChart(airport, boundType) {
         .attr('transform', `translate(${width} + 500, ${height}) + 500`)
         .style("visibility", "visible")
 
+    // using d3 v3 to match with the original code
     d3v3.json(`/summary-multivariate-chart/${airport}`, function(error, response) {
         if (error) throw error;
 
@@ -21,7 +21,6 @@ export default function multivariateChart(airport, boundType) {
             .style("visibility", "hidden")
 
         const dateTime = mergeData(response);
-
         const flights = make_rawdata(dateTime, airport, boundType);
 
         flights.forEach(function(d, i) {
@@ -97,7 +96,6 @@ export default function multivariateChart(airport, boundType) {
         // Create the crossfilter for the relevant dimensions and groups.
 
         var charts = [
-
             barChart()
             .dimension(hour)
             .group(hours)
@@ -228,7 +226,7 @@ export default function multivariateChart(airport, boundType) {
         function barChart() {
             if (!barChart.id) barChart.id = 0;
 
-            var margin = { top: 10, right: 10, bottom: 20, left: 10 },
+            var margin = { top: 10, right: 10, bottom: 20, left: 50 },
                 x,
                 y = d3v3.scale.linear().range([100, 0]),
                 id = barChart.id++,
@@ -244,7 +242,6 @@ export default function multivariateChart(airport, boundType) {
                 var width = x.range()[1],
                     height = y.range()[0];
 
-                // y.domain([0, group.top(1)[0].value]);
                 y.domain([0, group.top(1)[0].value]);
                 yaxis.scale(y)
 

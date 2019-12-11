@@ -3,14 +3,14 @@ import LatLon from "https://cdn.jsdelivr.net/npm/geodesy@2.2.0/latlon-spherical.
 import multivariateChart from '/static/js/cross_filter_chart.js'
 
 
-const svgWidth = 960; //document.documentElement.clientWidth; // 960;
+const svgWidth = 1200 //960; //document.documentElement.clientWidth; // 960;
 const svgHeight = 600; //document.documentElement.clientWidth; //800;
 const legendWidth = document.documentElement.clientWidth;
 const legendHeight = document.documentElement.clientHeight / 4;
 // const rotated = 100; // for mercator()
 
 const svg = d3.select('#d3-map').append('svg')
-    .attr('viewBox', `0 0 ${svgWidth} ${svgHeight}`)
+    .attr('viewBox', `-100 0 ${svgWidth} ${svgHeight}`)
     .attr('preserveAspectRatio', 'xMinYMin');
 
 const legendSvg = d3.select("#legend").append('svg')
@@ -25,6 +25,14 @@ const groups = {
     currentFlights: svg.append('g').attr('id', 'currentFlights'),
     legend: legendSvg.append('g').attr('id', 'legendGroup')
 };
+
+// cross_filter related DOM groups for removing contents before refreshing
+const cfGroup = {
+    hourChart: d3.select('#hour-chart'),
+    durationChart: d3.select('#duration-chart'),
+    distanceChart: d3.select('#distance-chart'),
+    dateChart: d3.select('#date-chart')
+}
 
 // Geo Projection
 const projection = d3.geoAlbers()
@@ -75,8 +83,8 @@ function processData(responses) {
         legend.append('text')
             .text('Outbound')
             .attr('fill', 'red')
-            .attr("x", `${legendWidth / 10 - 70}`)
-            .attr("y", `${legendHeight / 5}`)
+            .attr("x", `${legendWidth / 10 - 40}`)
+            .attr("y", `${legendHeight / 6}`)
             .attr('transform', 'scale(3)')
 
         const planeBlue = legend.append("path")
@@ -87,8 +95,8 @@ function processData(responses) {
         legend.append('text')
             .text('Inbound')
             .attr('fill', 'blue')
-            .attr("x", `${legendWidth / 10 + 120}`)
-            .attr("y", `${legendHeight / 5}`)
+            .attr("x", `${legendWidth / 10 + 110}`)
+            .attr("y", `${legendHeight / 6}`)
             .attr('transform', 'scale(3)')
 
         if (this.id === "current-flights") {
@@ -119,14 +127,23 @@ function processData(responses) {
     drawFlights(flightSummary, airportCode);
 
     airport_menu.on('change', function() {
-        if (document.getElementById("unlimited").checked) {
+        // if clicked airport exists, change the fillcolor to white first
+        const alreadyClicked = groups.airports.selectAll('[fill=red]');
+        if (!alreadyClicked.empty()) {
+            airportCode = alreadyClicked.nodes()[0].id
+        }
 
-            if (airportCode) {
-                d3.select(`circle#${airportCode}`)
-                    .attr('fill', 'white')
-                    .attr('stroke-width', 1)
-                    .attr('stroke', '#252525');
-            }
+        if (airportCode) {
+            d3.select(`circle#${airportCode}`)
+                .attr('fill', 'white')
+                .attr('stroke-width', 1)
+                .attr('stroke', '#252525');
+        }
+
+        if (document.getElementById("unlimited").checked) {
+            // remove previous animation before calling another one
+            d3.select("#scheduledPaths").html("");
+            d3.select("#currentFlights").html("");
 
             airportCode = (this.options[this.selectedIndex].text).slice(0, 3);
 
@@ -136,7 +153,7 @@ function processData(responses) {
             clearInterval(refreshIntervalId); // refresh the looping of "setInterval" 
             drawFlights(flightSummary, airportCode);
 
-            d3.select(this)
+            d3.select(`circle#${airportCode}`)
                 .attr('fill', 'red')
                 .attr('stroke-width', 3)
                 .attr('stroke', 'black');
@@ -145,6 +162,13 @@ function processData(responses) {
             drawHierarchicalBarChart(airportCode);
 
             // crossfilter chart
+            // removing DOM elements before refreshing
+            Object.entries(cfGroup).forEach(([key, val]) => {
+                if (!val.select('.title').select('a').empty()) {
+                    val.select('.title').select('a').remove()
+                    val.select('svg').remove()
+                }
+            });
             multivariateChart(airportCode, boundType);
 
         } else if (document.getElementById("current-flights").checked) {
@@ -153,21 +177,12 @@ function processData(responses) {
             d3.select("#scheduledPaths").html("");
             d3.select("#currentFlights").html("");
 
-            if (airportCode) {
-                d3.select(`circle#${airportCode}`)
-                    .attr('fill', 'white')
-                    .attr('stroke-width', 1)
-                    .attr('stroke', '#252525');
-            }
-
             airportCode = (this.options[this.selectedIndex].text).slice(0, 3);
 
             // display the airport information
             createAirportTable(airportCode);
-            // crossfilter chart
-            multivariateChart(airportCode, boundType);
 
-            d3.select(this)
+            d3.select(`circle#${airportCode}`)
                 .attr('fill', 'red')
                 .attr('stroke-width', 3)
                 .attr('stroke', 'black');
@@ -176,6 +191,16 @@ function processData(responses) {
             clearInterval(refreshIntervalId); // refresh the looping of "setInterval" 
             d3.select("#flights").html("");
             d3.select("#hierarchical-barchart").html("");
+
+            // crossfilter chart
+            // removing DOM elements before refreshing
+            Object.entries(cfGroup).forEach(([key, val]) => {
+                if (!val.select('.title').select('a').empty()) {
+                    val.select('.title').select('a').remove()
+                    val.select('svg').remove()
+                }
+            });
+            multivariateChart(airportCode, boundType);
 
             // show current flight progresses
             drawScheduledPaths(airportCode);
@@ -222,24 +247,19 @@ function drawAirports(airportCoords, flightSummary) {
 
     let isClicked = false;
     let clickedId;
+    let airportCode;
 
     const toolTip = d3.tip()
         .attr('class', 'd3-tip')
         .direction('e')
         .offset([0, 5])
         .html(function(d) {
-            // return (`<h5>Name: ${d.airport_name} (${d.airport_iatacode})</h5>
-            //          <h5>City: ${d.airport_city}</h5>
-            //          <h5>State: ${d.airport_state}</h5>`);
             return (`<table style="margin-top: 2.5px;">
             <tr><td>Name: </td><td style="text-align: left">${d.airport_name} (${d.airport_iatacode})</td></tr>
             <tr><td>City: </td><td style="text-align: left">${d.airport_city}</td></tr>
             <tr><td>State: </td><td style="text-align: left">${d.airport_state}</td></tr>
         </table>`);
         });
-
-
-
 
     airports.call(toolTip);
 
@@ -254,6 +274,11 @@ function drawAirports(airportCoords, flightSummary) {
         .attr('r', 8)
         .attr('fill', 'white')
         .on('mouseover', function(d, i, el) {
+            // if clicked airport exists, change the fillcolor to white first
+            const alreadyClicked = groups.airports.selectAll('[fill=red]');
+            if (!alreadyClicked.empty()) {
+                clickedId = alreadyClicked.nodes()[0].id;
+            }
 
             toolTip.show(d, el[i]);
 
@@ -294,6 +319,13 @@ function drawAirports(airportCoords, flightSummary) {
                     drawHierarchicalBarChart(this.id);
 
                     // crossfilter chart
+                    // removing DOM elements before refreshing
+                    Object.entries(cfGroup).forEach(([key, val]) => {
+                        if (!val.select('.title').select('a').empty()) {
+                            val.select('.title').select('a').remove()
+                            val.select('svg').remove()
+                        }
+                    });
                     multivariateChart(clickedId, boundType);
 
                 } else {
@@ -323,6 +355,13 @@ function drawAirports(airportCoords, flightSummary) {
                     drawHierarchicalBarChart(this.id);
 
                     // crossfilter chart
+                    // removing DOM elements before refreshing
+                    Object.entries(cfGroup).forEach(([key, val]) => {
+                        if (!val.select('.title').select('a').empty()) {
+                            val.select('.title').select('a').remove()
+                            val.select('svg').remove()
+                        }
+                    });
                     multivariateChart(clickedId, boundType);
                 }
 
@@ -342,6 +381,13 @@ function drawAirports(airportCoords, flightSummary) {
                     drawHierarchicalBarChart(this.id);
 
                     // crossfilter chart
+                    // removing DOM elements before refreshing
+                    Object.entries(cfGroup).forEach(([key, val]) => {
+                        if (!val.select('.title').select('a').empty()) {
+                            val.select('.title').select('a').remove()
+                            val.select('svg').remove()
+                        }
+                    });
                     multivariateChart(clickedId, boundType);
 
                 } else {
@@ -365,8 +411,6 @@ function drawAirports(airportCoords, flightSummary) {
 
                     // display the airport information
                     createAirportTable(clickedId);
-                    // crossfilter chart
-                    // multivariateChart(clickedId, boundType);
 
                     // show current flight progresses
                     drawScheduledPaths(clickedId);
@@ -379,6 +423,13 @@ function drawAirports(airportCoords, flightSummary) {
                     drawHierarchicalBarChart(this.id);
 
                     // crossfilter chart
+                    // removing DOM elements before refreshing
+                    Object.entries(cfGroup).forEach(([key, val]) => {
+                        if (!val.select('.title').select('a').empty()) {
+                            val.select('.title').select('a').remove()
+                            val.select('svg').remove()
+                        }
+                    });
                     multivariateChart(clickedId, boundType);
                 }
             }
@@ -504,7 +555,7 @@ function drawCurrentFlights(trackerCombined, airportCode) {
     const path = d3.geoPath(projection);
 
 
-    function fly(flightObj) {
+    function fly_current(flightObj) {
 
         const fullArc = scheduledPaths.append("path")
             .datum({ type: "LineString", coordinates: [flightObj.departureCoords, flightObj.arrivalCoords] })
@@ -528,19 +579,18 @@ function drawCurrentFlights(trackerCombined, airportCode) {
                 if (flightObj.boundType === "inBound") {
                     return 'blue';
                 } else { return 'red'; }
-            });
+            })
 
-
-        transition(plane, currentArc, fullArc, flightObj);
+        transition_current(plane, currentArc, fullArc, flightObj);
     }
 
-    function transition(plane, currentArc, fullArc, flightObj) {
+    function transition_current(plane, currentArc, fullArc, flightObj) {
         const long = fullArc.node().getTotalLength();
         const short = currentArc.node().getTotalLength();
 
         plane.transition()
             .duration(long * 50)
-            .attrTween("transform", delta(fullArc.node(), currentArc.node()))
+            .attrTween("transform", delta_current(fullArc.node(), currentArc.node()))
             .on("end", () => { // plane will head to its reported direction
                 return plane //.transition()
                     // .duration(2000)
@@ -549,9 +599,34 @@ function drawCurrentFlights(trackerCombined, airportCode) {
                                         scale(0.39) 
                                         rotate(${flightObj.currentDirection})`)
             });
+
+        const toolTip = d3.tip()
+            .attr('class', 'd3-tip')
+            .direction('e')
+            .offset([0, 5])
+            .html(function(d) {
+                return (`<table style="margin-top: 2.5px;">
+                <tr><td>Flight: </td><td style="text-align: left">${d.flight}</td></tr>
+                <tr><td>Departure: </td><td style="text-align: left">${d.departure}</td></tr>
+                <tr><td>Arrival: </td><td style="text-align: left">${d.arrival}</td></tr>
+                <tr><td>Total distance [mi.]: </td><td style="text-align: left">${Math.round(d.totalDistance * 10) / 10}</td></tr>
+                <tr><td>Remaining distance [mi.]: </td><td style="text-align: left">${Math.round(d.distanceLeft * 10) / 10}</td></tr>
+                <tr><td>Speed [mph]: </td><td style="text-align: left">${Math.round(d.currentSpeed * 10) / 10}</td></tr>
+                <tr><td>Remaining time [hr]: </td><td style="text-align: left">${Math.round(d.timeLeft * 100) / 100}</td></tr>
+            </table>`);
+            });
+
+
+        plane.datum(flightObj)
+            .enter()
+
+        plane.on('mouseover', (d, i, el) => toolTip.show(d, el[i]))
+            .on('mouseout', (d, i, el) => toolTip.hide(d, el[i]))
+            .call(toolTip);
+
     }
 
-    function delta(fullArc, arc) {
+    function delta_current(fullArc, arc) {
         var long = fullArc.getTotalLength();
         var short = arc.getTotalLength();
 
@@ -592,28 +667,43 @@ function drawCurrentFlights(trackerCombined, airportCode) {
         const departureCoords = route.departure_coords;
         const intermediateCoords = [route.currentLon, route.currentLat];
         const arrivalCoords = route.arrival_coords;
-        const flight = route.flight_icaoNumber;
+        const arrivalTimeUtc = route.arrival_schedule_time_utc
+        const flightIcao = route.flight_icaoNumber;
         const totalDistance = route.distance;
         const totalDuration = route.duration;
         const currentDirection = route.currentDirection;
         const currentStatus = route.currentStatus;
-        const currentSpeed = route.currentSpeedH;
+        const currentSpeed = route.currentSpeedH * 0.621371; // unit: kph -> mph
+        const currentUpdateUTC = route.currentUpdatedAt;
         const boundType = (airportCode === departure) ? "outBound" : "inBound";
 
+        let target = new LatLon(arrivalCoords[1], arrivalCoords[0]);
+        let intermediate = new LatLon(intermediateCoords[1], intermediateCoords[0]);
+        const currentDistance = intermediate.distanceTo(target, 3959); // unit: miles
+        const progress = currentDistance / totalDistance
+
+        const timeLeft = progress > 0.8 ? currentDistance / currentSpeed : progress < 0.1 ? currentDistance / 500 : currentDistance / currentSpeed // 500: average flight speed [mph]
+
         const flightObj = {
+            "departure": departure,
             "departureCoords": departureCoords,
             "intermediateCoords": intermediateCoords,
+            "arrival": arrival,
             "arrivalCoords": arrivalCoords,
-            "flight": flight,
+            "arrivalScheduledTimeUtc": arrivalTimeUtc,
+            "flight": flightIcao,
             "totalDistance": totalDistance,
             "totalDuration": totalDuration,
+            "distanceLeft": currentDistance,
             "currentDirection": currentDirection,
             "currentStatus": currentStatus,
             "currentSpeed": currentSpeed,
+            "timeLeft": timeLeft,
+            "currentUpdateUTC": currentUpdateUTC,
             "boundType": boundType
         }
 
-        fly(flightObj);
+        fly_current(flightObj);
 
     });
 
