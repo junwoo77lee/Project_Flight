@@ -10,13 +10,13 @@ Avaiation Edge API provides several connections into airport data.  This project
 
 ### Conclusion
 
-Airline, Airport and Avaition data allows for the opportunity to explore so many data points it can be challenging to pick the most relevant information as well as to not continue growing a project scope.  With further development and targeting this project could allow for users to create potentially paid offerings to both travelers and aiports.  
+Airline, Airport and Aviation data allows for the opportunity to explore so many data points it can be challenging to pick the most relevant information as well as to not continue growing a project scope.  With further development and targeting this project could allow for users to create potentially paid offerings to both travelers and airports.  
 
 ### Technologies Used 
 - Python
 - JavaScript
 - MongoDB
-- Juypter Notebook
+- Jupyter Notebook
 - CSS3
 - HTML5
 - Bootstrap4

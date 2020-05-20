@@ -46,7 +46,7 @@ def calculate_utc_time(date, timezone):
 
 
 # Use PyMongo to establish Mongo connection
-MONGO_URI = os.environ.get('MONGO_URI') or "mongodb+srv://junwoo77lee:Mongodb9662%21%40%23@cluster-flight-b5pai.mongodb.net/flight_app?retryWrites=true&w=majority"
+MONGO_URI = os.environ.get('MONGO_URI')
 mongo = PyMongo(app, uri=MONGO_URI)
 
 # This project will refer to the Top 61 US airports from wikipedia
