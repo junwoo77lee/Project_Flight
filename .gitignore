@@ -1,5 +1,6 @@
 .DS_Store
 .ipynb_checkpoints
+.vscode
 Explore_APIs.ipynb
 Untitled.ipynb
 dump
