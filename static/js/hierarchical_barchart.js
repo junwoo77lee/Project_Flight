@@ -37,7 +37,6 @@ function drawHierarchicalBarChart(airport) {
     // load airport statistis dataset
     d3.json(`/hierarchical-summary/${airport}`)
         .then(response => {
-            console.log(response);
 
             d3.select("#loader")
                 .style("visibility", "hidden")

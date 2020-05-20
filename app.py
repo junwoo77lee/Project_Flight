@@ -15,6 +15,7 @@ import pytz
 from datetime import datetime, timezone
 import calendar
 from collections import defaultdict
+from collections import Counter
 
 api_key = os.environ.get('FLIGHT_API_KEY', '')  # unsubscripted at Oct 16
 
@@ -145,6 +146,9 @@ def summary_hierarchy(airport):
                                                      ]
                                              }, {"_id": 0})
     resp_json = list(data_filtered)
+
+    # res_dict = defaultdict(defaultdict(defaultdict(defaultdict(Counter))))
+    # {"ABQ" : {"INBOUND" : {"DEN" : "Delta" : {"N/A": 5, "delay<30min": 6}}}}
 
     inbound_airports = []
     outbound_airports = []
