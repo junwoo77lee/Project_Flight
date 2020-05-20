@@ -1,0 +1,17 @@
+{
+    "type": "arrival",
+    "status": "active",
+    "departure": { "iataCode": "DEN", "icaoCode": "KDEN", "terminal": null, "gate": "A27", "baggage": null, "delay": "8", "scheduledTime": "2019-09-30T23:59:00.000", "estimatedTime": "2019-10-01T00:05:00.000", "actualTime": "2019-10-01T00:07:00.000", "estimatedRunway": "2019-10-01T00:07:00.000", "actualRunway": "2019-10-01T00:07:00.000" },
+    "arrival": { "iataCode": "JFK", "icaoCode": "KJFK", "terminal": "4", "gate": "B34", "baggage": "T4", "delay": null, "scheduledTime": "2019-10-01T05:45:00.000", "estimatedTime": "2019-10-01T05:14:00.000", "actualTime": null, "estimatedRunway": null, "actualRunway": null },
+    "airline": { "name": "Delta Air Lines", "iataCode": "DL", "icaoCode": "DAL" },
+    "flight": { "number": "1735", "iataNumber": "DL1735", "icaoNumber": "DAL1735" },
+    "codeshared": null,
+    "departLat": 39.84939,
+    "departLon": -104.672844,
+    "departAirportTimezone": "America/Denver",
+    "departCityCode": "DEN",
+    "arrivalLat": 40.642334,
+    "arrivalLon": -73.78817,
+    "arrivalAirportTimezone": "America/New_York",
+    "arrivalCityCode": "NYC"
+}
