@@ -7,6 +7,8 @@ import ujson as json
 import pandas as pd
 
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 import re
 
 import pytz
@@ -44,9 +46,11 @@ def calculate_utc_time(date, timezone):
     utc_dt = local_dt.astimezone(pytz.utc)
     return utc_dt
 
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
 
 # Use PyMongo to establish Mongo connection
-MONGO_URI = os.environ.get('MONGO_URI')
+MONGO_URI = os.getenv('MONGOURI')
 mongo = PyMongo(app, uri=MONGO_URI)
 
 # This project will refer to the Top 61 US airports from wikipedia
